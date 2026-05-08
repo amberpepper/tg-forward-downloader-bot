@@ -1,0 +1,12 @@
+.git
+.venv
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+downloads/
+data/
+tdl-data/
+*.zip
+tests/

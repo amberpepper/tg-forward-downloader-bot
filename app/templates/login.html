@@ -1,0 +1,207 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <title>登录 - tg-forward-downloader</title>
+  <style>
+    :root {
+      --bg-base: #0f172a;
+      --bg-panel: #1e293b;
+      --bg-hover: #334155;
+      --bg-input: #0f172a;
+      --border: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --error: #ef4444;
+      --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: "JetBrains Mono", "Fira Code", Consolas, monospace;
+      --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+    [data-theme="light"] {
+      --bg-base: #f8fafc;
+      --bg-panel: #ffffff;
+      --bg-hover: #f1f5f9;
+      --bg-input: #f8fafc;
+      --border: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --shadow-md: 0 10px 30px rgba(15, 23, 42, 0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(circle at top right, rgba(59,130,246,0.18), transparent 28%),
+        radial-gradient(circle at bottom left, rgba(139,92,246,0.14), transparent 22%),
+        var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-ui);
+      padding: 24px;
+    }
+    .box {
+      width: 400px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: var(--shadow-md);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(59,130,246,0.18), rgba(139,92,246,0.18));
+      box-shadow: 0 0 18px rgba(96,165,250,0.18);
+    }
+    .svg-icon {
+      width: 20px;
+      height: 20px;
+      display: inline-block;
+    }
+    .theme-toggle {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      width: 42px;
+      height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg-panel);
+      color: var(--text-main);
+      box-shadow: var(--shadow-md);
+      cursor: pointer;
+    }
+    h1 { margin: 0 0 6px; font-size: 22px; }
+    .muted { color: var(--text-muted); font-size: 13px; line-height: 1.6; }
+    .field {
+      margin-top: 14px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+    input, button {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg-input);
+      color: var(--text-main);
+      padding: 12px 14px;
+      font-size: 14px;
+    }
+    input {
+      font-family: var(--font-mono);
+    }
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    button {
+      cursor: pointer;
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+      margin-top: 18px;
+      font-weight: 600;
+    }
+    button:hover {
+      background: var(--primary-hover);
+      border-color: var(--primary-hover);
+      color: #fff;
+    }
+    .error {
+      background: rgba(239, 68, 68, 0.12);
+      color: #fecaca;
+      padding: 12px;
+      border-radius: 12px;
+      margin-top: 14px;
+      border: 1px solid rgba(239,68,68,0.35);
+    }
+  </style>
+</head>
+<body data-theme="dark">
+  <button class="theme-toggle" type="button" id="loginThemeToggleBtn" title="切换主题">
+    <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="4"></circle>
+      <path d="M12 2v2"></path>
+      <path d="M12 20v2"></path>
+      <path d="m4.93 4.93 1.41 1.41"></path>
+      <path d="m17.66 17.66 1.41 1.41"></path>
+      <path d="M2 12h2"></path>
+      <path d="M20 12h2"></path>
+      <path d="m6.34 17.66-1.41 1.41"></path>
+      <path d="m19.07 4.93-1.41 1.41"></path>
+    </svg>
+  </button>
+  <form class="box" method="post" action="/login">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3v12"></path>
+          <path d="m7 10 5 5 5-5"></path>
+          <path d="M5 21h14"></path>
+        </svg>
+      </div>
+    <div>
+        <h1>Web 管理后台</h1>
+        <div class="muted">请输入后台账号登录。</div>
+      </div>
+    </div>
+    __ERROR_HTML__
+    <div class="field">
+      <label>用户名</label>
+      <input name="username" placeholder="请输入后台用户名" required />
+    </div>
+    <div class="field">
+      <label>密码</label>
+      <input name="password" type="password" placeholder="请输入后台密码" required />
+    </div>
+    <button type="submit">登录</button>
+  </form>
+  <script>
+    (function() {
+      const KEY = 'tgfd-theme';
+      const body = document.body;
+      const btn = document.getElementById('loginThemeToggleBtn');
+      const applyTheme = (theme) => {
+        body.setAttribute('data-theme', theme);
+        try { localStorage.setItem(KEY, theme); } catch (e) {}
+      };
+      let saved = 'dark';
+      try { saved = localStorage.getItem(KEY) || 'dark'; } catch (e) {}
+      applyTheme(saved);
+      btn?.addEventListener('click', () => {
+        applyTheme(body.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+      });
+    })();
+  </script>
+</body>
+</html>
+    

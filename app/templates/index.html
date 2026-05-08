@@ -1,0 +1,2883 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css" />
+  <title>tg-forward-downloader 管理页</title>
+  <style>
+    :root {
+      --bg-base: #0f172a;
+      --bg-panel: #1e293b;
+      --bg-hover: #334155;
+      --bg-input: #0f172a;
+      --border: #334155;
+      --border-light: rgba(255, 255, 255, 0.08);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --success: #10b981;
+      --success-hover: #059669;
+      --success-bg: rgba(16, 185, 129, 0.12);
+      --warning: #f59e0b;
+      --warning-hover: #d97706;
+      --warning-bg: rgba(245, 158, 11, 0.12);
+      --error: #ef4444;
+      --error-hover: #dc2626;
+      --error-bg: rgba(239, 68, 68, 0.12);
+      --button-hover-bg: #3a475b;
+      --button-hover-border: #4b5a71;
+      --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: "JetBrains Mono", "Fira Code", Consolas, monospace;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.35);
+      --shadow-md: 0 8px 28px rgba(0,0,0,0.28);
+    }
+    [data-theme="light"] {
+      --bg-base: #f8fafc;
+      --bg-panel: #ffffff;
+      --bg-hover: #f1f5f9;
+      --bg-input: #f8fafc;
+      --border: #e2e8f0;
+      --border-light: rgba(0, 0, 0, 0.06);
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success-hover: #059669;
+      --success-bg: rgba(16, 185, 129, 0.1);
+      --warning-hover: #d97706;
+      --warning-bg: rgba(245, 158, 11, 0.1);
+      --error-hover: #dc2626;
+      --error-bg: rgba(239, 68, 68, 0.1);
+      --button-hover-bg: #e2e8f0;
+      --button-hover-border: #cbd5e1;
+      --shadow-sm: 0 1px 2px rgba(15,23,42,0.06);
+      --shadow-md: 0 8px 28px rgba(15,23,42,0.12);
+    }
+    * { box-sizing: border-box; }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+    body {
+      margin: 0;
+      background: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-ui);
+      font-size: 13px;
+      display: flex;
+      min-height: 100vh;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .sidebar {
+      width: 230px;
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-sm);
+      transition: width .22s ease;
+      overflow: hidden;
+    }
+    .brand {
+      height: 60px;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 700;
+      font-size: 16px;
+      justify-content: flex-start;
+    }
+    .brand-main {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      transition: gap .18s ease, justify-content .18s ease;
+    }
+    .brand-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: opacity .18s ease;
+    }
+    .brand-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.16));
+      box-shadow: 0 0 12px rgba(96,165,250,0.24);
+    }
+    .sidebar-toggle {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      transition: transform .2s ease, background .2s ease, border-color .2s ease;
+    }
+    .nav {
+      padding: 16px 0;
+      flex: 1;
+    }
+    .nav-item {
+      padding: 10px 20px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-right: 3px solid transparent;
+      cursor: pointer;
+      transition: all .2s ease;
+    }
+    .nav-item:hover {
+      background: rgba(100,100,100,0.05);
+      color: var(--text-main);
+    }
+    .nav-item.active {
+      background: rgba(59,130,246,0.1);
+      color: var(--primary);
+      border-right-color: var(--primary);
+    }
+    .nav-label {
+      white-space: nowrap;
+      transition: opacity .18s ease;
+    }
+    body.sidebar-collapsed .sidebar {
+      width: 88px;
+    }
+    body.sidebar-collapsed .brand {
+      padding: 0;
+      justify-content: center;
+    }
+    body.sidebar-collapsed .brand-text,
+    body.sidebar-collapsed .nav-label {
+      opacity: 0;
+      width: 0;
+      pointer-events: none;
+      padding: 0;
+      margin: 0;
+    }
+    body.sidebar-collapsed .nav-item {
+      justify-content: center;
+      padding: 12px 0;
+      gap: 0;
+    }
+    body.sidebar-collapsed .brand-main {
+      justify-content: center;
+      width: 100%;
+      gap: 0;
+    }
+    body.sidebar-collapsed .sidebar-toggle .svg-icon {
+      transform: rotate(180deg);
+    }
+    .main {
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .header {
+      height: 60px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      background: var(--bg-base);
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .header-left .sidebar-toggle {
+      width: 34px;
+      height: 34px;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .header-actions > button,
+    .header-actions form button {
+      height: 34px;
+      padding: 0 12px;
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    .header-actions form {
+      margin: 0;
+    }
+    #themeToggleBtn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 12px;
+      background: var(--bg-panel);
+      border-radius: 999px;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+    .content {
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+      height: 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 24px;
+    }
+    .tab-panel { display: none; min-width: 0; }
+    .tab-panel.active {
+      display: block;
+      min-width: 0;
+    }
+    h1, h2, h3 { margin: 0; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .overview-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(340px, 1fr);
+      gap: 16px;
+      align-items: start;
+      min-width: 0;
+    }
+    .overview-stack {
+      display: grid;
+      gap: 16px;
+      min-width: 0;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .stat-card, .card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow-sm);
+    }
+    .stat-card {
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::after {
+      content: "";
+      position: absolute;
+      right: -18px;
+      top: -18px;
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.03);
+    }
+    .stat-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .stat-value {
+      font-size: 28px;
+      font-family: var(--font-mono);
+      font-weight: 300;
+    }
+    .stat-sub {
+      margin-top: 6px;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+    .stat-success .stat-value { color: var(--success); }
+    .stat-error .stat-value { color: var(--error); }
+    .stat-primary .stat-value { color: var(--primary); }
+    .stat-warning .stat-value { color: var(--warning); }
+    .card-header {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .card-body {
+      padding: 16px 18px;
+      min-width: 0;
+    }
+    input, button, select {
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-input);
+      color: var(--text-main);
+      padding: 10px 12px;
+      font-size: 13px;
+    }
+    input, select {
+      font-family: var(--font-mono);
+    }
+    select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      padding-right: 36px;
+      background-image:
+        linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+        linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+      background-position:
+        calc(100% - 18px) calc(50% - 3px),
+        calc(100% - 12px) calc(50% - 3px);
+      background-size: 6px 6px, 6px 6px;
+      background-repeat: no-repeat;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+    }
+    input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      min-width: 16px;
+      min-height: 16px;
+      padding: 0;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      background: var(--bg-input);
+      cursor: pointer;
+      position: relative;
+      vertical-align: middle;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+    }
+    input[type="checkbox"]:checked {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+    input[type="checkbox"]:checked::after {
+      content: "";
+      position: absolute;
+      left: 5px;
+      top: 1px;
+      width: 4px;
+      height: 8px;
+      border: solid #fff;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+    input[type="checkbox"]:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+      border-color: var(--primary);
+    }
+    button {
+      cursor: pointer;
+      background: var(--bg-hover);
+      transition: background .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease;
+    }
+    button:hover {
+      background: var(--button-hover-bg);
+      border-color: var(--button-hover-border);
+      color: var(--text-main);
+      box-shadow: var(--shadow-sm);
+    }
+    .btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); color: #fff; box-shadow: var(--shadow-sm); }
+    .btn-success { background: var(--success); border-color: var(--success); color: #fff; }
+    .btn-success:hover { background: var(--success-hover); border-color: var(--success-hover); color: #fff; box-shadow: var(--shadow-sm); }
+    .btn-danger { background: var(--error); border-color: var(--error); color: #fff; }
+    .btn-danger:hover { background: var(--error-hover); border-color: var(--error-hover); color: #fff; box-shadow: var(--shadow-sm); }
+    .btn-warning { background: var(--warning); border-color: var(--warning); color: #111827; }
+    .btn-warning:hover { background: var(--warning-hover); border-color: var(--warning-hover); color: #fff; box-shadow: var(--shadow-sm); }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .jobs-toolbar {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .jobs-toolbar-primary,
+    .jobs-toolbar-secondary {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .jobs-search-input {
+      min-width: 220px;
+      max-width: 320px;
+      flex: 0 1 280px;
+    }
+    .jobs-toolbar-secondary {
+      justify-content: space-between;
+    }
+    .jobs-filter-group,
+    .jobs-batch-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .jobs-filter-select {
+      min-width: 118px;
+      height: 36px;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+    .quick-btn {
+      height: 36px;
+      padding: 0 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+    }
+    .modal-help {
+      color: var(--text-muted);
+      font-size: 12px;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+    .modal-form-grid {
+      display: grid;
+      gap: 12px;
+    }
+    .modal-field {
+      display: grid;
+      gap: 8px;
+    }
+    .modal-field label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    textarea {
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-input);
+      color: var(--text-main);
+      padding: 12px 14px;
+      font-size: 13px;
+      min-height: 120px;
+      resize: vertical;
+      font-family: var(--font-mono);
+    }
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    .muted { color: var(--text-muted); }
+    .small { font-size: 12px; }
+    .code-block {
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: var(--bg-input);
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      max-height: 320px;
+      overflow: auto;
+      font-family: var(--font-mono);
+    }
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .tool-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--bg-input);
+      padding: 14px;
+    }
+    .tool-card.installed {
+      border-color: rgba(16,185,129,0.35);
+      box-shadow: inset 0 0 0 1px rgba(16,185,129,0.08);
+    }
+    .tool-card.missing {
+      border-color: rgba(239,68,68,0.28);
+      box-shadow: inset 0 0 0 1px rgba(239,68,68,0.06);
+    }
+    .tool-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .tool-name {
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .tool-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .tool-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      display: inline-block;
+      background: var(--error);
+      box-shadow: 0 0 10px rgba(239,68,68,0.35);
+    }
+    .tool-status-dot.installed {
+      background: var(--success);
+      box-shadow: 0 0 10px rgba(16,185,129,0.35);
+    }
+    .tool-meta {
+      display: grid;
+      gap: 8px;
+    }
+    .tool-kv {
+      display: grid;
+      gap: 4px;
+    }
+    .tool-kv-label {
+      color: var(--text-muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .tool-kv-value {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+    .tool-updated-at {
+      margin-top: 10px;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+    .tool-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .tool-actions button {
+      width: auto;
+      min-width: 88px;
+    }
+    .mini-chart {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .stats-panels {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .stats-panel {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--bg-input);
+      padding: 14px;
+    }
+    .stats-panel-title {
+      margin-bottom: 10px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .mini-chart-row {
+      display: grid;
+      grid-template-columns: 120px 1fr 42px;
+      gap: 10px;
+      align-items: center;
+      font-size: 12px;
+    }
+    .mini-chart-label {
+      color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .mini-chart-bar {
+      height: 10px;
+      background: var(--bg-hover);
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .mini-chart-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), #8b5cf6);
+      border-radius: 999px;
+    }
+    .mini-chart-value {
+      text-align: right;
+      font-family: var(--font-mono);
+    }
+    .tool-table {
+      width: 100%;
+      min-width: 0;
+      table-layout: fixed;
+      border-collapse: collapse;
+    }
+    .tool-table th, .tool-table td {
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+      font-size: 12px;
+    }
+    .tool-table th {
+      background: transparent;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .tool-table .tool-name-cell {
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .tool-table .tool-path-cell {
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      word-break: break-all;
+    }
+    .tool-status-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    .hook-form {
+      display: grid;
+      gap: 12px;
+    }
+    .hook-field {
+      display: grid;
+      gap: 6px;
+    }
+    .hook-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .hook-label input[type="checkbox"] {
+      margin-right: 0 !important;
+    }
+    .hook-group-title {
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .hook-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 2px 0;
+    }
+    .hook-help {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .hook-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 2px;
+    }
+    .access-form {
+      display: grid;
+      gap: 10px;
+    }
+    .access-section {
+      display: grid;
+      gap: 10px;
+    }
+    .access-block {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--bg-input);
+      overflow: hidden;
+    }
+    .access-block-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(100,100,100,0.04);
+    }
+    .access-block-title {
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .request-table {
+      width: 100%;
+      min-width: 560px;
+    }
+    .access-list {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+    }
+    .access-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--bg-input);
+    }
+    .access-main {
+      min-width: 0;
+      display: grid;
+      gap: 3px;
+    }
+    .access-title {
+      font-size: 14px;
+      font-weight: 700;
+      word-break: break-all;
+    }
+    .access-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+    .access-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      flex: 0 0 auto;
+    }
+    .access-empty {
+      padding: 14px 12px;
+      color: var(--text-muted);
+      background: transparent;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1020px;
+    }
+    th {
+      text-align: left;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 12px;
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(100,100,100,0.05);
+    }
+    td {
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+      line-height: 1.45;
+    }
+    tr:hover {
+      background: rgba(255,255,255,0.02);
+    }
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .table-area {
+      position: relative;
+      min-height: 120px;
+    }
+    .ellipsis {
+      display: block;
+      width: 100%;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .cell-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      justify-content: center;
+      min-height: 40px;
+    }
+    .table-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      min-height: 40px;
+    }
+    .table-actions button {
+      width: auto;
+      min-width: 52px;
+      height: 32px;
+      padding: 0 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      font-size: 12px;
+    }
+    .jobs-table input[type="checkbox"] {
+      margin: 0;
+      transform: translateY(1px);
+    }
+    .progress-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 90px;
+    }
+    .progress-text {
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .jobs-table th:nth-child(2) { width: 1%; white-space: nowrap; }
+    .jobs-table th:nth-child(3) { width: 180px; }
+    .jobs-table th:nth-child(4) { width: 90px; }
+    .jobs-table th:nth-child(5) { width: 150px; }
+    .jobs-table th:nth-child(6) { width: 110px; }
+    .jobs-table th:nth-child(7) { width: 320px; }
+    .jobs-table th:nth-child(8) { width: 170px; }
+    .jobs-table th:nth-child(9) { width: 220px; }
+    .jobs-table th:nth-child(10) { width: 220px; }
+    .jobs-table th:first-child,
+    .jobs-table td:first-child {
+      width: 36px;
+      min-width: 36px;
+      padding-left: 8px;
+      padding-right: 8px;
+      text-align: center;
+    }
+    .jobs-table input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      padding: 0;
+      margin: 0;
+      vertical-align: middle;
+    }
+    .events-table th:nth-child(1) { width: 160px; }
+    .events-table th:nth-child(2) { width: 170px; }
+    .events-table th:nth-child(3) { width: 170px; }
+    .events-table th:nth-child(4) { width: 120px; }
+    .events-table th:nth-child(5) { width: 120px; }
+    .section-loading {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 120px;
+      color: var(--text-muted);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.02);
+      margin-top: 8px;
+    }
+    .section-loading.show {
+      display: flex;
+    }
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      border-top-color: var(--primary);
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .empty-state {
+      display: none;
+      text-align: center;
+      padding: 28px 16px;
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      color: var(--text-muted);
+      background: rgba(255,255,255,0.02);
+      margin-top: 8px;
+    }
+    .empty-state.show {
+      display: block;
+    }
+    .pager {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .pager button {
+      width: auto;
+      min-width: 72px;
+      height: 32px;
+      padding: 0 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      font-size: 12px;
+    }
+    .pager-info {
+      display: inline-flex;
+      align-items: center;
+      min-height: 32px;
+      padding: 0 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-input);
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 30px;
+      padding: 0 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-hover);
+      font-size: 12px;
+      font-weight: 600;
+      width: fit-content;
+      max-width: 100%;
+      white-space: nowrap;
+      line-height: 1;
+    }
+    .status-queued { background: rgba(59,130,246,0.18); color: #93c5fd; border-color: rgba(96,165,250,0.34); }
+    .status-downloading { background: rgba(245,158,11,0.18); color: #fbbf24; border-color: rgba(251,191,36,0.34); }
+    .status-success { background: rgba(16,185,129,0.18); color: #6ee7b7; border-color: rgba(52,211,153,0.34); }
+    .status-failed, .status-cancelled { background: rgba(239,68,68,0.20); color: #fca5a5; border-color: rgba(248,113,113,0.40); }
+    [data-theme="light"] .status-queued { background: rgba(59,130,246,0.14); color: #1d4ed8; border-color: rgba(59,130,246,0.28); }
+    [data-theme="light"] .status-downloading { background: rgba(245,158,11,0.16); color: #b45309; border-color: rgba(245,158,11,0.30); }
+    [data-theme="light"] .status-success { background: rgba(16,185,129,0.14); color: #047857; border-color: rgba(16,185,129,0.28); }
+    [data-theme="light"] .status-failed, [data-theme="light"] .status-cancelled { background: rgba(239,68,68,0.14); color: #b91c1c; border-color: rgba(239,68,68,0.28); }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 8px 16px;
+      margin-bottom: 16px;
+    }
+    .chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .file-list {
+      margin: 0;
+      padding-left: 0;
+      list-style: none;
+      display: grid;
+      gap: 10px;
+    }
+    .file-list li {
+      margin-bottom: 0;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.02);
+    }
+    .file-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .file-info {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+    }
+    .file-name {
+      font-weight: 600;
+      word-break: break-all;
+    }
+    .file-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      flex: 0 0 auto;
+    }
+    .preview-panel {
+      display: grid;
+      gap: 10px;
+    }
+    .preview-box {
+      min-height: 320px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--bg-input);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .preview-box video,
+    .preview-box audio,
+    .preview-box img,
+    .preview-box iframe {
+      display: block;
+      border: 0;
+    }
+    .preview-box video {
+      width: 100%;
+      height: auto;
+      max-height: 60vh;
+      background: #000;
+    }
+    .preview-box audio {
+      width: calc(100% - 32px);
+      margin: 16px;
+    }
+    .preview-box .plyr {
+      width: 100%;
+      max-height: 60vh;
+      border-radius: 12px;
+    }
+    .preview-box .plyr--audio {
+      width: calc(100% - 32px);
+      margin: 16px;
+    }
+    .preview-box img {
+      width: 100%;
+      height: auto;
+      max-height: 62vh;
+      object-fit: contain;
+      background: rgba(0,0,0,0.3);
+    }
+    .preview-box iframe {
+      width: 100%;
+      min-height: 60vh;
+      background: #fff;
+    }
+    .preview-empty {
+      min-height: 240px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      padding: 16px;
+      text-align: center;
+    }
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.72);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 50;
+    }
+    .modal.show {
+      display: flex;
+    }
+    .modal-card {
+      width: min(920px, 100%);
+      max-height: 88vh;
+      overflow: auto;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow-md);
+    }
+    .modal-header {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-panel);
+    }
+    .modal-body {
+      padding: 18px;
+    }
+    .modal-close {
+      width: 36px;
+      height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+    }
+    .detail-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+      gap: 16px;
+    }
+    .detail-card {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .detail-card h3 {
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    .copy-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .log-preview {
+      max-height: 220px;
+    }
+    .toast-stack {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 80;
+    }
+    .toast {
+      min-width: 260px;
+      max-width: 420px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg-panel);
+      box-shadow: var(--shadow-md);
+      border-left: 4px solid var(--primary);
+      animation: toastIn .18s ease;
+    }
+    .toast.success { border-left-color: var(--success); }
+    .toast.error { border-left-color: var(--error); }
+    .toast.warning { border-left-color: var(--warning); }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .svg-icon {
+      width: 16px;
+      height: 16px;
+      display: inline-block;
+      flex: 0 0 auto;
+    }
+    .brand-icon .svg-icon {
+      width: 18px;
+      height: 18px;
+    }
+    a {
+      color: #60a5fa;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    @media (max-width: 980px) {
+      body { display: block; overflow: auto; }
+      .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+      .main { min-height: auto; }
+      .content { padding: 16px; }
+      .overview-grid { grid-template-columns: 1fr; }
+      .stats-panels { grid-template-columns: 1fr; }
+      .access-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .access-actions {
+        width: 100%;
+      }
+      .detail-grid { grid-template-columns: 1fr; }
+      .detail-layout { grid-template-columns: 1fr; }
+      .header {
+        height: auto;
+        padding: 14px 16px;
+        align-items: flex-start;
+        gap: 12px;
+        flex-direction: column;
+      }
+      .header-actions {
+        width: 100%;
+      }
+      .header-actions > * {
+        flex: 1 1 auto;
+      }
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .modal {
+        padding: 12px;
+      }
+      .modal-card {
+        width: 100%;
+        max-height: 92vh;
+      }
+      .row > input,
+      .row > select,
+      .row > button {
+        flex: 1 1 100%;
+      }
+    }
+    @media (max-width: 640px) {
+      .content { padding: 12px; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .status-indicator { width: 100%; justify-content: center; }
+      .header-actions { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+      .header-actions form { grid-column: span 2; }
+      .brand { height: 54px; }
+    }
+  </style>
+</head>
+<body data-theme="dark">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-main">
+        <div class="brand-icon">
+          <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3v12"></path>
+            <path d="m7 10 5 5 5-5"></path>
+            <path d="M5 21h14"></path>
+          </svg>
+        </div>
+        <div class="brand-text">TG Downloader</div>
+      </div>
+    </div>
+    <div class="nav">
+      <div class="nav-item active" data-tab-target="overview">
+        <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 3v18h18"></path>
+          <path d="m7 14 4-4 3 3 5-7"></path>
+        </svg>
+        <span class="nav-label">概览</span>
+      </div>
+      <div class="nav-item" data-tab-target="jobs">
+        <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3v12"></path>
+          <path d="m7 10 5 5 5-5"></path>
+          <path d="M5 21h14"></path>
+        </svg>
+        <span class="nav-label">下载历史</span>
+      </div>
+      <div class="nav-item" data-tab-target="events">
+        <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 6h13"></path>
+          <path d="M8 12h13"></path>
+          <path d="M8 18h13"></path>
+          <path d="M3 6h.01"></path>
+          <path d="M3 12h.01"></path>
+          <path d="M3 18h.01"></path>
+        </svg>
+        <span class="nav-label">事件日志</span>
+      </div>
+      <div class="nav-item" data-tab-target="login-logs">
+        <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 17l5-5-5-5"></path>
+          <path d="M15 12H3"></path>
+          <path d="M21 19V5"></path>
+        </svg>
+        <span class="nav-label">登录日志</span>
+      </div>
+      <div class="nav-item" data-tab-target="access">
+        <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="8.5" cy="7" r="4"></circle>
+          <path d="M20 8v6"></path>
+          <path d="M23 11h-6"></path>
+        </svg>
+        <span class="nav-label">白名单</span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="header">
+      <div class="header-left">
+        <button class="sidebar-toggle" id="sidebarToggleBtn" type="button" title="折叠侧边栏">
+          <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m15 18-6-6 6-6"></path>
+          </svg>
+        </button>
+        <div class="status-indicator"><span class="status-dot"></span> 服务运行中</div>
+      </div>
+      <div class="header-actions">
+        <span class="badge">队列 <strong id="headerQueue">0</strong></span>
+        <span class="badge">成功 <strong id="headerSuccess">0</strong></span>
+        <span class="badge">失败 <strong id="headerFailed">0</strong></span>
+        <button type="button" id="refreshAllBtn" class="btn-primary">立即刷新</button>
+        <button type="button" id="themeToggleBtn" title="切换主题">
+          <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2"></path>
+            <path d="M12 20v2"></path>
+            <path d="m4.93 4.93 1.41 1.41"></path>
+            <path d="m17.66 17.66 1.41 1.41"></path>
+            <path d="M2 12h2"></path>
+            <path d="M20 12h2"></path>
+            <path d="m6.34 17.66-1.41 1.41"></path>
+            <path d="m19.07 4.93-1.41 1.41"></path>
+          </svg>
+          <span id="themeToggleText">切换主题</span>
+        </button>
+        <form id="logoutForm" method="post" action="/logout"><button type="button" onclick="openLogoutModal()">退出登录</button></form>
+      </div>
+    </header>
+
+    <div class="content">
+      <section class="tab-panel active" data-tab="overview">
+        <div class="stats-grid">
+          <div class="stat-card stat-primary">
+            <div class="stat-title">数据库 / 队列</div>
+            <div class="stat-value" id="queue_stat_value">--</div>
+            <div class="stat-sub">当前队列与 worker 情况</div>
+          </div>
+          <div class="stat-card stat-success">
+            <div class="stat-title">下载任务总览</div>
+            <div class="stat-value" id="job_stat_value">--</div>
+            <div class="stat-sub">success / failed / queued</div>
+          </div>
+          <div class="stat-card stat-warning">
+            <div class="stat-title">热门来源</div>
+            <div class="stat-value" id="stats_focus_value">--</div>
+            <div class="stat-sub">来源 / 用户 / 状态聚合</div>
+          </div>
+          <div class="stat-card stat-error">
+            <div class="stat-title">失败任务</div>
+            <div class="stat-value" id="failed_stat_value">--</div>
+            <div class="stat-sub">失败与取消任务汇总</div>
+          </div>
+          <div class="stat-card stat-primary">
+            <div class="stat-title">活跃 worker</div>
+            <div class="stat-value" id="worker_stat_value">--</div>
+            <div class="stat-sub">并发执行能力</div>
+          </div>
+          <div class="stat-card stat-success">
+            <div class="stat-title">白名单用户</div>
+            <div class="stat-value" id="allowlist_stat_value">--</div>
+            <div class="stat-sub">当前允许访问用户数</div>
+          </div>
+        </div>
+        <div class="overview-grid">
+          <div class="overview-stack">
+            <section class="card">
+              <div class="card-header">
+                <h2>统计</h2>
+              </div>
+              <div class="card-body">
+                <div id="statsChart" class="stats-panels"></div>
+              </div>
+            </section>
+            <section class="card">
+              <div class="card-header">
+                <h2>工具状态</h2>
+                <div class="row">
+                  <button type="button" onclick="reloadToolsStatus()">重新检测</button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div id="toolsStatus"></div>
+              </div>
+            </section>
+          </div>
+          <section class="card">
+            <div class="card-header">
+              <h2>设置中心</h2>
+            </div>
+            <div class="card-body">
+              <div class="hook-form">
+                <div class="hook-group-title">系统开关</div>
+                <div class="hook-field">
+                  <label class="hook-label" for="setting_require_allowlist">
+                    <input id="setting_require_allowlist" type="checkbox" style="margin-right:8px; width:auto;" />
+                    开启白名单限制
+                  </label>
+                </div>
+                <div class="hook-field">
+                  <label class="hook-label" for="setting_reply_on_finish">
+                    <input id="setting_reply_on_finish" type="checkbox" style="margin-right:8px; width:auto;" />
+                    下载完成后发送文本通知
+                  </label>
+                </div>
+                <div class="hook-field">
+                  <label class="hook-label" for="setting_max_concurrent_jobs">同时下载数</label>
+                  <input id="setting_max_concurrent_jobs" type="number" min="1" step="1" placeholder="1" />
+                </div>
+                <div class="hook-help">
+                  这些开关会直接写入数据库设置，保存后立即生效，无需重启。
+                </div>
+                <div class="hook-divider"></div>
+                <div class="hook-group-title">tdl 登录</div>
+                <div class="row" style="gap:10px; align-items:center; flex-wrap:wrap;">
+                  <button type="button" onclick="exportTdlSession()">导出 tdl 登录</button>
+                  <input id="tdl_session_file" type="file" accept=".tdl,application/octet-stream" style="max-width:260px;" />
+                  <button type="button" class="btn-primary" onclick="importTdlSession()">导入 tdl 登录</button>
+                </div>
+                <div class="hook-divider"></div>
+                <div class="hook-group-title">事件通知</div>
+                <div class="hook-field">
+                  <label class="hook-label" for="hook_webhook_url">Webhook URL（留空关闭）</label>
+                  <input id="hook_webhook_url" placeholder="https://example.com/hook" />
+                </div>
+                <div class="hook-field">
+                  <label class="hook-label" for="hook_script">脚本命令（留空关闭）</label>
+                  <input id="hook_script" placeholder="例如 python3 /opt/hook.py 或 node /opt/hook.js" />
+                </div>
+                <div class="hook-actions">
+                  <button type="button" class="btn-primary" onclick="saveHookConfig()">保存</button>
+                  <button type="button" onclick="testHookConfig()">测试通知</button>
+                </div>
+                <div class="hook-help">
+                  Webhook 和脚本都可以单独关闭；留空就是不启用。
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="tab-panel" data-tab="jobs">
+        <section class="card">
+            <div class="card-header">
+              <h2>下载历史</h2>
+              <span class="badge">任务</span>
+            </div>
+          <div class="card-body">
+            <div class="jobs-toolbar">
+              <div class="jobs-toolbar-primary">
+                <input id="job_search" class="jobs-search-input" placeholder="搜索用户 / 链接 / 类型" />
+                <button class="btn-primary quick-btn" onclick="reloadJobs(1)">搜索</button>
+                <button class="quick-btn" type="button" onclick="openManualJobModal()">添加下载</button>
+              </div>
+              <div class="jobs-toolbar-secondary">
+                <div class="jobs-filter-group">
+                  <select id="job_status" class="jobs-filter-select">
+                    <option value="">全部状态</option>
+                    <option value="queued">queued</option>
+                    <option value="downloading">downloading</option>
+                    <option value="success">success</option>
+                    <option value="failed">failed</option>
+                    <option value="cancelled">cancelled</option>
+                  </select>
+                  <select id="job_page_size" class="jobs-filter-select">
+                    <option value="10">10/页</option>
+                    <option value="20" selected>20/页</option>
+                    <option value="50">50/页</option>
+                  </select>
+                </div>
+                <div class="jobs-batch-actions">
+                  <button class="btn-danger quick-btn" onclick="bulkCancel()">批量取消</button>
+                  <button class="btn-success quick-btn" onclick="bulkRetry()">批量重试</button>
+                  <button class="btn-warning quick-btn" onclick="bulkDelete()">批量删除历史</button>
+                </div>
+              </div>
+            </div>
+            <div class="section-loading" id="jobsLoading"><span class="spinner"></span><span>正在加载下载历史...</span></div>
+            <div class="empty-state" id="jobsEmpty">当前没有匹配的下载历史记录</div>
+            <div class="table-area table-wrap"><table id="jobs" class="jobs-table"></table></div>
+            <div class="pager">
+              <button onclick="prevPage()">上一页</button>
+              <button onclick="nextPage()">下一页</button>
+              <span id="jobs_meta" class="pager-info"></span>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="tab-panel" data-tab="events">
+        <section class="card">
+          <div class="card-header">
+            <h2>事件历史</h2>
+            <span class="badge">事件</span>
+          </div>
+          <div class="card-body">
+            <div class="row" style="margin-bottom:12px;">
+              <input id="event_search" placeholder="搜索类型 / 用户 / 详情" />
+              <input id="event_type" placeholder="按事件类型精确过滤" />
+              <select id="event_page_size">
+                <option value="10">10/页</option>
+                <option value="20" selected>20/页</option>
+                <option value="50">50/页</option>
+              </select>
+              <button class="btn-primary" onclick="reloadEvents(1)">搜索事件</button>
+              <button onclick="quickEventType('')">全部</button>
+              <button onclick="quickEventType('job.failed')">下载失败</button>
+              <button onclick="quickEventType('job.success')">下载成功</button>
+              <button onclick="quickEventType('job.queued')">任务入队</button>
+              <button onclick="quickEventType('message.rejected')">消息拒绝</button>
+            </div>
+            <div class="section-loading" id="eventsLoading"><span class="spinner"></span><span>正在加载事件历史...</span></div>
+            <div class="empty-state" id="eventsEmpty">当前没有匹配的事件记录</div>
+            <div class="table-wrap"><table id="events" class="events-table"></table></div>
+            <div class="pager">
+              <button onclick="prevEventPage()">上一页</button>
+              <button onclick="nextEventPage()">下一页</button>
+              <span id="events_meta" class="pager-info"></span>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="tab-panel" data-tab="login-logs">
+        <section class="card">
+          <div class="card-header">
+            <h2>登录日志</h2>
+            <span class="badge">审计</span>
+          </div>
+          <div class="card-body">
+            <div class="row" style="margin-bottom:12px;">
+              <input id="login_log_search" placeholder="搜索用户名 / IP / User-Agent" />
+              <select id="login_log_success">
+                <option value="">全部结果</option>
+                <option value="true">成功</option>
+                <option value="false">失败</option>
+              </select>
+              <select id="login_log_page_size">
+                <option value="10">10/页</option>
+                <option value="20" selected>20/页</option>
+                <option value="50">50/页</option>
+              </select>
+              <button class="btn-primary" onclick="reloadLoginLogs(1)">搜索日志</button>
+            </div>
+            <div class="empty-state" id="loginLogsEmpty">当前没有匹配的登录日志</div>
+            <div class="table-wrap"><table id="loginLogsTable" class="events-table"></table></div>
+            <div class="pager">
+              <button onclick="prevLoginLogPage()">上一页</button>
+              <button onclick="nextLoginLogPage()">下一页</button>
+              <span id="loginLogsMeta" class="pager-info"></span>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="tab-panel" data-tab="access">
+        <section class="card">
+          <div class="card-header">
+            <h2>用户授权</h2>
+            <span class="badge" id="accessMeta">权限</span>
+          </div>
+          <div class="card-body">
+            <div class="row" style="margin-bottom:12px;">
+              <button class="btn-primary" type="button" onclick="openAllowUserModal()">添加用户</button>
+              <button type="button" onclick="reloadAccessRequests()">刷新</button>
+            </div>
+            <div class="access-section">
+              <div class="access-block">
+                <div class="access-block-head">
+                  <div class="access-block-title">已授权用户</div>
+                  <div class="small muted" id="allowlistCount">0 人</div>
+                </div>
+                <div class="table-wrap">
+                  <table id="allowlistTable" class="request-table"></table>
+                </div>
+              </div>
+            </div>
+            <div id="pendingAccessSection" class="access-block" style="display:none; margin-top:16px;">
+              <div class="access-block-head">
+                <div class="access-block-title">待审核用户</div>
+                <div class="small muted" id="pendingAccessCount">0 人</div>
+              </div>
+              <div id="accessRequestsList" class="access-list"></div>
+            </div>
+          </div>
+        </section>
+      </section>
+    </div>
+  </main>
+
+  <div class="modal" id="jobDetailModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h2>任务详情</h2>
+        </div>
+        <div class="row" style="flex-wrap:nowrap;">
+          <button type="button" onclick="refreshCurrentJobDetail()">刷新详情</button>
+          <button class="modal-close" type="button" id="jobDetailModalClose">
+            <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18"></path>
+              <path d="m6 6 12 12"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div id="job_detail" class="small muted">点击任务“详情”查看</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="jobPreviewModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h2>文件预览</h2>
+          <div class="muted small">预览任务输出文件</div>
+        </div>
+        <button class="modal-close" type="button" onclick="closeJobPreviewModal()">
+          <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18"></path>
+            <path d="m6 6 12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="job_preview_detail" class="small muted">点击任务“预览”查看</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="allowUserModal">
+    <div class="modal-card" style="width:min(520px,100%);">
+      <div class="modal-header">
+        <div>
+          <h2>添加白名单用户</h2>
+          <div class="muted small">支持 user_id 或 username，二选一即可</div>
+        </div>
+        <button class="modal-close" type="button" onclick="closeAllowUserModal()">
+          <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18"></path>
+            <path d="m6 6 12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="access-form">
+          <input id="modal_user_id" placeholder="填 user_id，例如 123456" />
+          <input id="modal_username" placeholder="或填 username，例如 alice / @alice" />
+          <div class="small muted">只填一个就行；如果两个都填，会一起写入白名单。</div>
+          <div class="row">
+            <button class="btn-primary" type="button" onclick="submitAllowUserModal()">确认添加</button>
+            <button type="button" onclick="closeAllowUserModal()">取消</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="manualJobModal">
+    <div class="modal-card" style="width:min(680px,100%);">
+      <div class="modal-header">
+        <div>
+          <div style="font-weight:700; font-size:16px;">添加下载</div>
+          <div class="small muted">支持 Telegram 消息链接 / 普通视频链接，多行一条一个</div>
+        </div>
+        <button class="modal-close" type="button" onclick="closeManualJobModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-form-grid">
+          <div class="modal-field">
+            <label for="manual_job_source">下载链接</label>
+            <textarea id="manual_job_source" placeholder="https://t.me/xxx/123&#10;https://example.com/video.mp4"></textarea>
+            <div class="modal-help">每行一个链接；提交后会自动加入下载队列。</div>
+          </div>
+          <div class="row" style="justify-content:flex-end;">
+            <button type="button" onclick="closeManualJobModal()">取消</button>
+            <button type="button" class="btn-primary" onclick="createManualJob()">确认添加</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="logoutModal">
+    <div class="modal-card" style="width:min(420px,100%);">
+      <div class="modal-header">
+        <div>
+          <h2>退出登录</h2>
+        </div>
+        <button class="modal-close" type="button" onclick="closeLogoutModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="small muted" style="margin-bottom:16px;">确认退出当前后台登录？</div>
+        <div class="row" style="justify-content:flex-end;">
+          <button type="button" onclick="closeLogoutModal()">取消</button>
+          <button type="button" class="btn-danger" onclick="submitLogout()">确认退出</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toastStack"></div>
+
+<script>
+const boot = __BOOT_JSON__;
+let jobPage = 1;
+let jobPages = 1;
+let eventPage = 1;
+let eventPages = 1;
+let loginLogPage = 1;
+let loginLogPages = 1;
+const selectedJobIds = new Set();
+let currentJobDetailId = '';
+let currentJobDetailData = null;
+let currentJobPreviewIndex = -1;
+let currentPreviewJobId = '';
+let currentPreviewPlayer = null;
+let jobsReloadInFlight = false;
+let eventsReloadInFlight = false;
+let loginLogsReloadInFlight = false;
+let jobDetailReloadInFlight = false;
+let toolActionInFlight = false;
+let hookConfigInFlight = false;
+
+function setText(id, value) {
+  document.getElementById(id).textContent = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+}
+
+function fmtDateTime(value) {
+  if (!value) return '';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function formatDateTime(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
+function translateEventType(value) {
+  const mapping = {
+    'job.queued': '任务入队',
+    'job.downloading': '下载中',
+    'job.success': '下载成功',
+    'job.failed': '下载失败',
+    'job.cancelled': '任务取消',
+    'message.rejected': '消息拒绝',
+    'allowlist.allow': '允许用户',
+    'allowlist.deny': '移除用户',
+    'login.success': '登录成功',
+    'login.failed': '登录失败',
+  };
+  return mapping[value] || value || '';
+}
+
+function getFileBaseName(path) {
+  const value = String(path || '').split('/').pop() || String(path || '');
+  return value || 'file';
+}
+
+function getPreviewType(path) {
+  const lower = String(path || '').toLowerCase();
+  if (/\.(mp4|m4v|mov|mkv|webm|avi|flv|wmv|mpeg|mpg|3gp|ts)$/.test(lower)) return 'video';
+  if (/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/.test(lower)) return 'image';
+  if (/\.(mp3|m4a|aac|wav|ogg|flac|opus)$/.test(lower)) return 'audio';
+  if (/\.pdf$/.test(lower)) return 'pdf';
+  if (/\.(txt|log|json|md|csv|xml|yml|yaml|html|htm)$/.test(lower)) return 'text';
+  return '';
+}
+
+function findDefaultPreviewIndex(files) {
+  const list = Array.isArray(files) ? files : [];
+  for (let i = 0; i < list.length; i += 1) {
+    if (getPreviewType(list[i])) return i;
+  }
+  return -1;
+}
+
+function renderJobFiles(job) {
+  const files = job?.files || [];
+  if (!files.length) return '<li class="muted">暂无文件</li>';
+  return files.map((path, idx) => {
+    return `
+      <li>
+        <div class="file-row">
+          <div class="file-info">
+            <div class="file-name">${escapeHtml(getFileBaseName(path))}</div>
+            <div class="muted small">${escapeHtml(path)}</div>
+          </div>
+          <div class="file-actions">
+            <a href="/api/jobs/${job.job_id}/files/${idx}" target="_blank"><button type="button">下载</button></a>
+          </div>
+        </div>
+      </li>
+    `;
+  }).join('');
+}
+
+function renderPreviewFileList(job) {
+  const files = job?.files || [];
+  if (!files.length) return '<li class="muted">暂无文件</li>';
+  return files.map((path, idx) => {
+    const previewType = getPreviewType(path);
+    const previewBtn = previewType
+      ? `<button type="button" onclick="setJobFilePreview(${idx})">预览</button>`
+      : '';
+    return `
+      <li>
+        <div class="file-row">
+          <div class="file-info">
+            <div class="file-name">${escapeHtml(getFileBaseName(path))}</div>
+            <div class="muted small">${escapeHtml(path)}</div>
+          </div>
+          <div class="file-actions">
+            ${previewBtn}
+            <a href="/api/jobs/${job.job_id}/files/${idx}" target="_blank"><button type="button">下载</button></a>
+          </div>
+        </div>
+      </li>
+    `;
+  }).join('');
+}
+
+function renderJobPreview(job, previewIndex) {
+  const files = job?.files || [];
+  if (!files.length) {
+    return '<div class="preview-empty">暂无可预览文件</div>';
+  }
+  if (previewIndex < 0 || previewIndex >= files.length) {
+    return '<div class="preview-empty">当前文件类型不支持预览，请直接下载查看</div>';
+  }
+  const path = files[previewIndex];
+  const type = getPreviewType(path);
+  const src = `/api/jobs/${job.job_id}/files/${previewIndex}`;
+  if (type === 'video') {
+    return `<video class="js-plyr" controls playsinline preload="metadata" src="${src}"></video>`;
+  }
+  if (type === 'image') {
+    return `<img src="${src}" alt="${escapeHtml(getFileBaseName(path))}" />`;
+  }
+  if (type === 'audio') {
+    return `<audio class="js-plyr" controls preload="metadata" src="${src}"></audio>`;
+  }
+  if (type === 'pdf' || type === 'text') {
+    return `<iframe src="${src}" title="${escapeHtml(getFileBaseName(path))}"></iframe>`;
+  }
+  return '<div class="preview-empty">当前文件类型不支持预览，请直接下载查看</div>';
+}
+
+function setJobFilePreview(index) {
+  if (!currentJobDetailData) return;
+  currentJobPreviewIndex = index;
+  const root = document.getElementById('job_file_preview');
+  if (!root) return;
+  destroyPreviewPlayer();
+  root.innerHTML = renderJobPreview(currentJobDetailData, currentJobPreviewIndex);
+  initPreviewPlayer();
+}
+
+function destroyPreviewPlayer() {
+  try {
+    if (currentPreviewPlayer && typeof currentPreviewPlayer.destroy === 'function') {
+      currentPreviewPlayer.destroy();
+    }
+  } catch (e) {}
+  currentPreviewPlayer = null;
+}
+
+function initPreviewPlayer() {
+  const media = document.querySelector('#job_file_preview .js-plyr');
+  if (!media || typeof window.Plyr !== 'function') return;
+  destroyPreviewPlayer();
+  currentPreviewPlayer = new window.Plyr(media, {
+    controls: [
+      'play-large', 'play', 'progress', 'current-time', 'mute',
+      'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'
+    ],
+    fullscreen: { enabled: true, fallback: true, iosNative: true },
+    settings: ['speed'],
+    speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
+  });
+}
+
+function setSectionLoading(id, show) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.toggle('show', !!show);
+}
+
+function setEmptyState(id, show) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.toggle('show', !!show);
+}
+
+function showToast(message, type='success') {
+  const stack = document.getElementById('toastStack');
+  if (!stack) return;
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = message;
+  stack.appendChild(el);
+  setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(-6px)';
+    setTimeout(() => el.remove(), 180);
+  }, 2600);
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.nav-item[data-tab-target]').forEach((el) => {
+    el.classList.toggle('active', el.getAttribute('data-tab-target') === name);
+  });
+  document.querySelectorAll('.tab-panel[data-tab]').forEach((el) => {
+    el.classList.toggle('active', el.getAttribute('data-tab') === name);
+  });
+}
+
+function initTabs() {
+  document.querySelectorAll('.nav-item[data-tab-target]').forEach((el) => {
+    el.addEventListener('click', () => switchTab(el.getAttribute('data-tab-target')));
+  });
+}
+
+function initSidebarToggle() {
+  const btn = document.getElementById('sidebarToggleBtn');
+  const saved = localStorage.getItem('tgfd-sidebar-collapsed');
+  if (saved === '1') document.body.classList.add('sidebar-collapsed');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    document.body.classList.toggle('sidebar-collapsed');
+    localStorage.setItem('tgfd-sidebar-collapsed', document.body.classList.contains('sidebar-collapsed') ? '1' : '0');
+  });
+}
+
+function initTheme() {
+  const KEY = 'tgfd-theme';
+  const btn = document.getElementById('themeToggleBtn');
+  const text = document.getElementById('themeToggleText');
+  const applyTheme = (theme) => {
+    document.body.setAttribute('data-theme', theme);
+    try { localStorage.setItem(KEY, theme); } catch (e) {}
+    if (text) text.textContent = theme === 'light' ? '深色' : '浅色';
+  };
+  let saved = 'dark';
+  try { saved = localStorage.getItem(KEY) || 'dark'; } catch (e) {}
+  applyTheme(saved);
+  btn?.addEventListener('click', () => {
+    const next = document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    applyTheme(next);
+  });
+}
+
+function openJobDetailModal() {
+  document.getElementById('jobDetailModal').classList.add('show');
+}
+
+function isJobDetailModalOpen() {
+  return document.getElementById('jobDetailModal').classList.contains('show');
+}
+
+function closeJobDetailModal() {
+  document.getElementById('jobDetailModal').classList.remove('show');
+  currentJobDetailId = '';
+}
+
+function openJobPreviewModal() {
+  document.getElementById('jobPreviewModal').classList.add('show');
+}
+
+function isJobPreviewModalOpen() {
+  return document.getElementById('jobPreviewModal').classList.contains('show');
+}
+
+function closeJobPreviewModal() {
+  destroyPreviewPlayer();
+  document.getElementById('jobPreviewModal').classList.remove('show');
+  currentPreviewJobId = '';
+  currentJobDetailData = null;
+  currentJobPreviewIndex = -1;
+}
+
+function openAllowUserModal() {
+  document.getElementById('allowUserModal').classList.add('show');
+}
+
+function closeAllowUserModal() {
+  document.getElementById('allowUserModal').classList.remove('show');
+}
+
+function openManualJobModal() {
+  document.getElementById('manualJobModal').classList.add('show');
+  const input = document.getElementById('manual_job_source');
+  setTimeout(() => input?.focus(), 30);
+}
+
+function closeManualJobModal() {
+  document.getElementById('manualJobModal').classList.remove('show');
+}
+
+function openLogoutModal() {
+  document.getElementById('logoutModal').classList.add('show');
+}
+
+function closeLogoutModal() {
+  document.getElementById('logoutModal').classList.remove('show');
+}
+
+function submitLogout() {
+  document.getElementById('logoutForm')?.submit();
+}
+
+function initModals() {
+  const modal = document.getElementById('jobDetailModal');
+  const previewModal = document.getElementById('jobPreviewModal');
+  const allowModal = document.getElementById('allowUserModal');
+  const manualJobModal = document.getElementById('manualJobModal');
+  const logoutModal = document.getElementById('logoutModal');
+  const closeBtn = document.getElementById('jobDetailModalClose');
+  if (closeBtn) closeBtn.addEventListener('click', closeJobDetailModal);
+  if (modal) {
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) closeJobDetailModal();
+    });
+  }
+  if (previewModal) {
+    previewModal.addEventListener('click', (event) => {
+      if (event.target === previewModal) closeJobPreviewModal();
+    });
+  }
+  if (allowModal) {
+    allowModal.addEventListener('click', (event) => {
+      if (event.target === allowModal) closeAllowUserModal();
+    });
+  }
+  if (manualJobModal) {
+    manualJobModal.addEventListener('click', (event) => {
+      if (event.target === manualJobModal) closeManualJobModal();
+    });
+  }
+  if (logoutModal) {
+    logoutModal.addEventListener('click', (event) => {
+      if (event.target === logoutModal) closeLogoutModal();
+    });
+  }
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeJobDetailModal();
+      closeJobPreviewModal();
+      closeAllowUserModal();
+      closeManualJobModal();
+      closeLogoutModal();
+    }
+  });
+}
+
+function renderState(state) {
+  renderAllowlist(state.allowed_user_ids || [], state.allowed_usernames || []);
+  renderAccessRequests(state.access_requests || []);
+  document.getElementById('queue_stat_value').textContent = `${state.queue?.in_memory_size ?? 0}`;
+  document.getElementById('job_stat_value').textContent = `${(state.job_counts?.success ?? 0)} / ${(state.job_counts?.failed ?? 0)} / ${(state.job_counts?.queued ?? 0)}`;
+  document.getElementById('failed_stat_value').textContent = `${(state.job_counts?.failed ?? 0) + (state.job_counts?.cancelled ?? 0)}`;
+  document.getElementById('worker_stat_value').textContent = `${state.queue?.worker_count ?? 0}`;
+  const allowCount = (state.allowed_user_ids || []).length + (state.allowed_usernames || []).length;
+  document.getElementById('allowlist_stat_value').textContent = `${allowCount}`;
+  const accessMeta = document.getElementById('accessMeta');
+  if (accessMeta) accessMeta.textContent = `已授权 ${allowCount}`;
+  document.getElementById('headerQueue').textContent = `${state.queue?.in_memory_size ?? 0}`;
+  document.getElementById('headerSuccess').textContent = `${state.job_counts?.success ?? 0}`;
+  document.getElementById('headerFailed').textContent = `${state.job_counts?.failed ?? 0}`;
+}
+
+function renderAllowlist(userIds, usernames) {
+  const root = document.getElementById('allowlistTable');
+  const countEl = document.getElementById('allowlistCount');
+  if (!root) return;
+  const rows = [];
+  for (const userId of (userIds || [])) {
+    rows.push(`
+      <tr>
+        <td>${escapeHtml(String(userId))}</td>
+        <td>-</td>
+        <td><button onclick="applyAccessAction('deny', '${escapeHtml(String(userId))}', '')">移除</button></td>
+      </tr>
+    `);
+  }
+  for (const username of (usernames || [])) {
+    rows.push(`
+      <tr>
+        <td>-</td>
+        <td>${escapeHtml('@' + username)}</td>
+        <td><button onclick="applyAccessAction('deny', '', '${escapeHtml(String(username))}')">移除</button></td>
+      </tr>
+    `);
+  }
+  if (countEl) countEl.textContent = `${rows.length} 人`;
+  if (!rows.length) {
+    root.innerHTML = '<tr><th>user_id</th><th>username</th><th>操作</th></tr><tr><td colspan="3" class="muted small">暂无已授权用户</td></tr>';
+    return;
+  }
+  root.innerHTML = `<tr><th>user_id</th><th>username</th><th>操作</th></tr>${rows.join('')}`;
+}
+
+function renderAccessRequests(items) {
+  const root = document.getElementById('accessRequestsList');
+  const section = document.getElementById('pendingAccessSection');
+  const countEl = document.getElementById('pendingAccessCount');
+  if (!root) return;
+  const pendingItems = (items || []).filter((item) => (item.status || 'pending') === 'pending');
+  if (!pendingItems.length) {
+    if (section) section.style.display = 'none';
+    if (countEl) countEl.textContent = '0 人';
+    root.innerHTML = '';
+    return;
+  }
+  if (section) section.style.display = 'block';
+  if (countEl) countEl.textContent = `${pendingItems.length} 人`;
+  const rows = pendingItems.map((item) => {
+    const userId = item.user_id ?? '';
+    const username = item.username || '';
+    return `
+      <div class="access-item">
+        <div class="access-main">
+          <div class="access-title">${escapeHtml(item.full_name || '-')}</div>
+          <div class="access-meta">
+            <span>${escapeHtml(username ? '@' + username : '无 username')}</span>
+            <span>${escapeHtml(String(userId || '无 user_id'))}</span>
+            <span>chat_id：${escapeHtml(String(item.chat_id || ''))}</span>
+          </div>
+          <div class="access-meta">
+            <span>首次：${escapeHtml(fmtDateTime(item.first_seen_at))}</span>
+            <span>最近：${escapeHtml(fmtDateTime(item.last_seen_at))}</span>
+          </div>
+        </div>
+        <div class="access-actions">
+          <button class="btn-primary" onclick="applyAccessAction('allow', '${escapeHtml(String(userId))}', '${escapeHtml(username)}')">直接授权</button>
+          <button onclick="applyAccessAction('deny', '${escapeHtml(String(userId))}', '${escapeHtml(username)}')">拒绝</button>
+        </div>
+      </div>
+    `;
+  });
+  root.innerHTML = rows.join('');
+}
+
+function renderStats(stats) {
+  const sourceTop = stats?.by_source_type?.[0];
+  document.getElementById('stats_focus_value').textContent = sourceTop ? `${sourceTop.source_type} · ${sourceTop.count}` : '--';
+  const chart = document.getElementById('statsChart');
+  if (chart) {
+    const sections = [
+      { title: '来源类型', items: stats?.by_source_type || [], key: 'source_type' },
+      { title: '任务状态', items: stats?.by_status || [], key: 'status' },
+    ];
+    const panels = sections.map((section) => {
+      const max = Math.max(1, ...(section.items || []).map(item => item.count || 0));
+      const rows = (section.items || []).slice(0, 6).map((item) => {
+        const label = item[section.key] || 'unknown';
+        const width = Math.max(6, Math.round(((item.count || 0) / max) * 100));
+        return `<div class="mini-chart-row"><div class="mini-chart-label">${escapeHtml(String(label))}</div><div class="mini-chart-bar"><div class="mini-chart-fill" style="width:${width}%"></div></div><div class="mini-chart-value">${item.count || 0}</div></div>`;
+      }).join('') || '<div class="muted small">暂无数据</div>';
+      return `<div class="stats-panel"><div class="stats-panel-title">${section.title}</div><div class="mini-chart">${rows}</div></div>`;
+    });
+    chart.innerHTML = panels.join('');
+  }
+}
+
+function renderToolsStatus(data) {
+  const root = document.getElementById('toolsStatus');
+  if (!root) return;
+  const tools = data?.tools || {};
+  const names = Object.keys(tools);
+  if (names.length === 0) {
+    root.innerHTML = '<div class="empty-state show" style="margin-top:0;">暂无工具状态</div>';
+    return;
+  }
+  const rows = names.map((name) => {
+    const item = tools[name] || {};
+    const installed = !!item.installed;
+    const statusText = installed ? '已就绪' : '未检测到';
+    const version = item.version || (installed ? '-' : '未安装');
+    const path = item.path || '-';
+    const actionLabel = installed ? '更新' : '安装';
+    return `
+      <tr>
+        <td class="tool-name-cell">${escapeHtml(name)}</td>
+        <td>
+          <div class="tool-status-inline">
+            <span class="tool-status-dot ${installed ? 'installed' : ''}"></span>
+            <span>${statusText}</span>
+          </div>
+        </td>
+        <td><span class="tool-path-cell">${escapeHtml(version)}</span></td>
+        <td><div class="tool-path-cell">${escapeHtml(path)}</div></td>
+        <td><button type="button" class="btn-primary" data-tool-action="1" onclick="runToolAction('${escapeHtml(name)}', '${installed ? "update" : "install"}')">${actionLabel}</button></td>
+      </tr>
+    `;
+  });
+  root.innerHTML = `
+    <div class="table-wrap">
+      <table class="tool-table">
+        <thead>
+          <tr><th>工具</th><th>状态</th><th>版本</th><th>路径</th><th>操作</th></tr>
+        </thead>
+        <tbody>${rows.join('')}</tbody>
+      </table>
+    </div>
+    <div class="tool-updated-at">最后检测：${escapeHtml(formatDateTime(data?.updated_at) || '-')}</div>
+  `;
+}
+
+function renderJobs(data) {
+  jobPage = data.page || 1;
+  jobPages = data.pages || 1;
+  setSectionLoading('jobsLoading', false);
+  setEmptyState('jobsEmpty', (data.items || []).length === 0);
+  if ((data.items || []).length === 0) {
+    document.getElementById('jobs').innerHTML = '';
+    setText('jobs_meta', `第 ${jobPage} / ${jobPages} 页，共 ${data.total || 0} 条`);
+    return;
+  }
+  const rows = ['<tr><th><input type="checkbox" onclick="toggleAllJobs(this.checked)" /></th><th>状态</th><th>进度</th><th>次数</th><th>用户</th><th>类型</th><th>消息</th><th>更新时间</th><th>失败原因</th><th>操作</th></tr>'];
+  for (const item of (data.items || [])) {
+    const actions = [];
+    actions.push(`<button onclick="loadJobDetail('${item.job_id}')">详情</button>`);
+    if ((item.files || []).length > 0) {
+      actions.push(`<button onclick="openJobPreview('${item.job_id}')">预览</button>`);
+    }
+    if (item.can_cancel) {
+      actions.push(`<button onclick="cancelJob('${item.job_id}')">取消</button>`);
+    }
+    if (item.can_retry) {
+      actions.push(`<button onclick="retryJob('${item.job_id}')">重试</button>`);
+    }
+    if (!item.can_cancel) {
+      actions.push(`<button class="btn-warning" onclick="bulkDeleteOne('${item.job_id}')">删除</button>`);
+    }
+    const statusClass = `status-${item.status || 'queued'}`;
+    const checked = selectedJobIds.has(item.job_id) ? 'checked' : '';
+    const progressPercent = typeof item.progress_percent === 'number' ? Math.max(0, Math.min(100, item.progress_percent)) : null;
+    const progressLabel = progressPercent !== null ? `${Math.round(progressPercent)}%` : '--';
+    rows.push(`<tr><td><input type="checkbox" data-job-id="${item.job_id}" ${checked} onchange="toggleJob('${item.job_id}', this.checked)" /></td><td><div class="cell-stack"><span class="badge ${statusClass}">${item.status || ''}</span></div></td><td><div class="cell-stack">${progressLabel}</div></td><td><div class="cell-stack">${item.attempts || 0}</div></td><td><div class="cell-stack"><div class="ellipsis" title="${escapeHtml(item.from_user || '')}">${item.from_user || ''}</div><div class="muted small ellipsis" title="${escapeHtml(item.from_user_id || '')}">${item.from_user_id || ''}</div></div></td><td><div class="cell-stack"><div class="ellipsis" title="${escapeHtml(item.source_type || '')}">${item.source_type || ''}</div></div></td><td><div class="cell-stack"><div class="ellipsis" title="${escapeHtml(item.source_value || '')}">${item.source_value || ''}</div></div></td><td><div class="cell-stack">${formatDateTime(item.updated_at) || ''}</div></td><td><div class="cell-stack"><div class="ellipsis" title="${escapeHtml(item.error || '')}">${item.error || ''}</div></div></td><td><div class="table-actions">${actions.join(' ')}</div></td></tr>`);
+  }
+  document.getElementById('jobs').innerHTML = rows.join('');
+  setText('jobs_meta', `第 ${jobPage} / ${jobPages} 页，共 ${data.total || 0} 条`);
+}
+
+function renderEvents(data) {
+  eventPage = data.page || 1;
+  eventPages = data.pages || 1;
+  setSectionLoading('eventsLoading', false);
+  setEmptyState('eventsEmpty', (data.items || []).length === 0);
+  if ((data.items || []).length === 0) {
+    document.getElementById('events').innerHTML = '';
+    setText('events_meta', `第 ${eventPage} / ${eventPages} 页，共 ${data.total || 0} 条`);
+    return;
+  }
+  const rows = ['<tr><th>时间</th><th>类型</th><th>用户</th><th>会话</th><th>消息</th><th>详情</th></tr>'];
+  for (const item of (data.items || [])) {
+    const detail = Object.entries(item)
+      .filter(([k]) => !['id','time','event_type','chat_id','user_id','username','full_name','message_id'].includes(k))
+      .map(([k,v]) => `${escapeHtml(k)}=${escapeHtml(typeof v === 'object' ? JSON.stringify(v) : v)}`)
+      .join(' | ');
+    rows.push(`<tr><td>${escapeHtml(formatDateTime(item.time) || '')}</td><td><span class="badge">${escapeHtml(translateEventType(item.event_type || ''))}</span></td><td>${escapeHtml(item.username || '')}<div class="muted small">${escapeHtml(item.user_id || '')}</div></td><td>${escapeHtml(item.chat_id || '')}</td><td>${escapeHtml(item.message_id || '')}</td><td>${detail || ''}</td></tr>`);
+  }
+  document.getElementById('events').innerHTML = rows.join('');
+  setText('events_meta', `第 ${eventPage} / ${eventPages} 页，共 ${data.total || 0} 条`);
+}
+
+function renderLoginLogs(data) {
+  loginLogPage = data.page || 1;
+  loginLogPages = data.pages || 1;
+  const items = data.items || [];
+  setEmptyState('loginLogsEmpty', items.length === 0);
+  if (items.length === 0) {
+    document.getElementById('loginLogsTable').innerHTML = '';
+    setText('loginLogsMeta', `第 ${loginLogPage} / ${loginLogPages} 页，共 ${data.total || 0} 条`);
+    return;
+  }
+  const rows = ['<tr><th>时间</th><th>结果</th><th>用户名</th><th>IP</th><th>User-Agent</th><th>失败原因</th></tr>'];
+  for (const item of items) {
+    const resultClass = item.success ? 'status-success' : 'status-failed';
+    const resultText = item.success ? '成功' : '失败';
+    rows.push(
+      `<tr><td>${escapeHtml(formatDateTime(item.created_at) || '')}</td><td><span class="badge ${resultClass}">${resultText}</span></td><td>${escapeHtml(item.username || '')}</td><td>${escapeHtml(item.ip || '')}</td><td><div class="ellipsis" title="${escapeHtml(item.user_agent || '')}">${escapeHtml(item.user_agent || '')}</div></td><td>${escapeHtml(item.failure_reason || '')}</td></tr>`
+    );
+  }
+  document.getElementById('loginLogsTable').innerHTML = rows.join('');
+  setText('loginLogsMeta', `第 ${loginLogPage} / ${loginLogPages} 页，共 ${data.total || 0} 条`);
+}
+
+async function reloadState() {
+  const res = await fetch('/api/state', { credentials: 'same-origin' });
+  if (res.status === 401) { window.location.href = '/login'; return; }
+  const data = await res.json();
+  renderState(data);
+  const statsRes = await fetch('/api/stats/summary', { credentials: 'same-origin' });
+  if (statsRes.status === 401) { window.location.href = '/login'; return; }
+  renderStats(await statsRes.json());
+}
+
+async function reloadToolsStatus() {
+  if (toolActionInFlight) return;
+  const res = await fetch('/api/tools/status', { credentials: 'same-origin' });
+  if (res.status === 401) { window.location.href = '/login'; return; }
+  const data = await res.json();
+  renderToolsStatus(data);
+}
+
+async function loadHookConfig() {
+  if (hookConfigInFlight) return;
+  hookConfigInFlight = true;
+  try {
+    const res = await fetch('/api/hook/config', { credentials: 'same-origin' });
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    const data = await res.json();
+    const urlInput = document.getElementById('hook_webhook_url');
+    const scriptInput = document.getElementById('hook_script');
+    const replyOnFinishInput = document.getElementById('setting_reply_on_finish');
+    const requireAllowlistInput = document.getElementById('setting_require_allowlist');
+    const maxConcurrentJobsInput = document.getElementById('setting_max_concurrent_jobs');
+    if (urlInput) urlInput.value = data.default_webhook_url || '';
+    if (scriptInput) scriptInput.value = data.default_hook_script || '';
+    if (replyOnFinishInput) replyOnFinishInput.checked = !!data.telegram_reply_on_finish;
+    if (requireAllowlistInput) requireAllowlistInput.checked = !!data.require_allowlist;
+    if (maxConcurrentJobsInput) maxConcurrentJobsInput.value = String(data.max_concurrent_jobs ?? 1);
+  } finally {
+    hookConfigInFlight = false;
+  }
+}
+
+async function saveHookConfig() {
+  const webhook_url = document.getElementById('hook_webhook_url')?.value || '';
+  const hook_script = document.getElementById('hook_script')?.value || '';
+  const telegram_reply_on_finish = !!document.getElementById('setting_reply_on_finish')?.checked;
+  const require_allowlist = !!document.getElementById('setting_require_allowlist')?.checked;
+  const max_concurrent_jobs = Number(document.getElementById('setting_max_concurrent_jobs')?.value || '1');
+  const res = await fetch('/api/hook/config', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ webhook_url, hook_script, telegram_reply_on_finish, require_allowlist, max_concurrent_jobs }),
+  });
+  if (res.status === 401) { window.location.href = '/login'; return; }
+  const data = await res.json();
+  if (!res.ok) {
+    alert(JSON.stringify(data));
+    return;
+  }
+  await loadHookConfig();
+  await reloadState();
+  showToast('Hook 已保存');
+}
+
+async function testHookConfig() {
+  const res = await fetch('/api/hook/test', {
+    method: 'POST',
+    credentials: 'same-origin',
+  });
+  if (res.status === 401) { window.location.href = '/login'; return; }
+  const data = await res.json();
+  if (!res.ok) {
+    alert(JSON.stringify(data));
+    return;
+  }
+  showToast('Hook 测试已触发');
+}
+
+function setToolActionButtonsDisabled(disabled) {
+  document.querySelectorAll('button[data-tool-action]').forEach((btn) => {
+    btn.disabled = !!disabled;
+  });
+}
+
+async function runToolAction(toolName, action) {
+  if (toolActionInFlight) return;
+  toolActionInFlight = true;
+  setToolActionButtonsDisabled(true);
+  try {
+    const res = await fetch(`/api/tools/${encodeURIComponent(toolName)}/${encodeURIComponent(action)}`, {
+      method: 'POST',
+      credentials: 'same-origin',
+    });
+    const data = await res.json();
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    if (!res.ok) {
+      alert((data?.output || data?.detail || '执行失败').slice(-2000));
+      return;
+    }
+    renderToolsStatus(data.status || {});
+    showToast(`${toolName} 已${action === 'update' ? '更新' : '安装'}`);
+  } finally {
+    toolActionInFlight = false;
+    setToolActionButtonsDisabled(false);
+  }
+}
+
+async function exportTdlSession() {
+  const res = await fetch('/api/tools/tdl/session/export', {
+    credentials: 'same-origin',
+  });
+  if (res.status === 401) { window.location.href = '/login'; return; }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    alert(data.detail || '导出失败');
+    return;
+  }
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const disposition = res.headers.get('Content-Disposition') || '';
+  let filename = 'tdl-session-export.tdl';
+  const match = disposition.match(/filename=\"?([^"]+)\"?/i);
+  if (match && match[1]) filename = match[1];
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
+  showToast('tdl 登录已导出');
+}
+
+async function importTdlSession() {
+  const input = document.getElementById('tdl_session_file');
+  const file = input?.files?.[0];
+  if (!file) {
+    alert('先选择一个 .tdl 文件');
+    return;
+  }
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await fetch('/api/tools/tdl/session/import', {
+    method: 'POST',
+    credentials: 'same-origin',
+    body: formData,
+  });
+  if (res.status === 401) { window.location.href = '/login'; return; }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    alert(data.detail || '导入失败');
+    return;
+  }
+  if (input) input.value = '';
+  showToast(data.message || 'tdl 登录已导入');
+}
+
+async function createManualJob() {
+  const input = document.getElementById('manual_job_source');
+  const values = (input?.value || '')
+    .split('\n')
+    .map((x) => x.trim())
+    .filter(Boolean);
+  if (values.length === 0) {
+    alert('请输入下载链接');
+    return;
+  }
+  for (const source_value of values) {
+    const res = await fetch('/api/jobs/manual', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source_value }),
+    });
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.detail || `添加失败：${source_value}`);
+      return;
+    }
+  }
+  if (input) input.value = '';
+  closeManualJobModal();
+  await reloadState();
+  await reloadJobs(1, { background: true });
+  showToast(values.length > 1 ? `已添加 ${values.length} 个下载` : '已添加下载');
+}
+
+async function reloadJobs(page, options = {}) {
+  if (jobsReloadInFlight) return;
+  jobsReloadInFlight = true;
+  const background = !!options.background;
+  if (page) jobPage = page;
+  if (!background) {
+    setSectionLoading('jobsLoading', true);
+    setEmptyState('jobsEmpty', false);
+  }
+  const q = encodeURIComponent(document.getElementById('job_search').value || '');
+  const status = encodeURIComponent(document.getElementById('job_status').value || '');
+  const pageSize = encodeURIComponent(document.getElementById('job_page_size').value || '20');
+  try {
+    const res = await fetch(`/api/jobs?page=${jobPage}&page_size=${pageSize}&q=${q}&status=${status}`, { credentials: 'same-origin' });
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    const data = await res.json();
+    if (!res.ok) {
+      setSectionLoading('jobsLoading', false);
+      showToast('加载下载历史失败', 'error');
+      return;
+    }
+    renderJobs(data);
+  } finally {
+    jobsReloadInFlight = false;
+  }
+}
+
+async function reloadEvents(page, options = {}) {
+  if (eventsReloadInFlight) return;
+  eventsReloadInFlight = true;
+  const background = !!options.background;
+  if (page) eventPage = page;
+  if (!background) {
+    setSectionLoading('eventsLoading', true);
+    setEmptyState('eventsEmpty', false);
+  }
+  const q = encodeURIComponent(document.getElementById('event_search').value || '');
+  const eventType = encodeURIComponent(document.getElementById('event_type').value || '');
+  const pageSize = encodeURIComponent(document.getElementById('event_page_size').value || '20');
+  try {
+    const res = await fetch(`/api/events?page=${eventPage}&page_size=${pageSize}&q=${q}&event_type=${eventType}`, { credentials: 'same-origin' });
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    const data = await res.json();
+    if (!res.ok) {
+      setSectionLoading('eventsLoading', false);
+      showToast('加载事件历史失败', 'error');
+      return;
+    }
+    renderEvents(data);
+  } finally {
+    eventsReloadInFlight = false;
+  }
+}
+
+async function reloadLoginLogs(page, options = {}) {
+  if (loginLogsReloadInFlight) return;
+  loginLogsReloadInFlight = true;
+  const background = !!options.background;
+  if (page) loginLogPage = page;
+  if (!background) {
+    setEmptyState('loginLogsEmpty', false);
+  }
+  const q = encodeURIComponent(document.getElementById('login_log_search').value || '');
+  const success = encodeURIComponent(document.getElementById('login_log_success').value || '');
+  const pageSize = encodeURIComponent(document.getElementById('login_log_page_size').value || '20');
+  try {
+    const res = await fetch(`/api/login-logs?page=${loginLogPage}&page_size=${pageSize}&q=${q}&success=${success}`, { credentials: 'same-origin' });
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    const data = await res.json();
+    if (!res.ok) {
+      showToast('加载登录日志失败', 'error');
+      return;
+    }
+    renderLoginLogs(data);
+  } finally {
+    loginLogsReloadInFlight = false;
+  }
+}
+
+async function changeAllow(action) {
+  const body = {
+    user_id: document.getElementById('modal_user_id')?.value ? Number(document.getElementById('modal_user_id').value) : null,
+    username: document.getElementById('modal_username')?.value || null,
+  };
+  const res = await fetch(`/api/allowlist/${action}`, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) { alert(JSON.stringify(data)); return; }
+  await reloadState();
+  closeAllowUserModal();
+  showToast(action === 'allow' ? '白名单已添加' : '白名单已移除');
+}
+
+async function applyAccessAction(action, userId, username) {
+  const userIdInput = document.getElementById('modal_user_id');
+  const usernameInput = document.getElementById('modal_username');
+  if (userIdInput) userIdInput.value = userId || '';
+  if (usernameInput) usernameInput.value = username || '';
+  await changeAllow(action);
+}
+
+async function reloadAccessRequests() {
+  await reloadState();
+}
+
+async function submitAllowUserModal() {
+  await changeAllow('allow');
+}
+
+async function cancelJob(jobId) {
+  const res = await fetch(`/api/jobs/${jobId}/cancel`, { method: 'POST', credentials: 'same-origin' });
+  const data = await res.json();
+  if (!res.ok) { alert(JSON.stringify(data)); return; }
+  await reloadState();
+  await reloadJobs(jobPage);
+  showToast(`任务已取消：${jobId}`, 'warning');
+}
+
+async function retryJob(jobId) {
+  const res = await fetch(`/api/jobs/${jobId}/retry`, { method: 'POST', credentials: 'same-origin' });
+  const data = await res.json();
+  if (!res.ok) { alert(JSON.stringify(data)); return; }
+  await reloadState();
+  await reloadJobs(jobPage);
+  showToast(`任务已重试：${jobId}`);
+}
+
+async function loadJobDetail(jobId, options = {}) {
+  if (!jobId || jobDetailReloadInFlight) return;
+  const reopen = options.reopen !== false;
+  jobDetailReloadInFlight = true;
+  currentJobDetailId = jobId;
+  const [detailRes, logRes] = await Promise.all([
+    fetch(`/api/jobs/${jobId}`, { credentials: 'same-origin' }),
+    fetch(`/api/jobs/${jobId}/log`, { credentials: 'same-origin' })
+  ]);
+  try {
+    const data = await detailRes.json();
+    if (!detailRes.ok) { alert(JSON.stringify(data)); return; }
+    const job = data.job;
+    const logText = logRes.ok ? await logRes.text() : '';
+    const files = renderJobFiles(job);
+    const statusClass = `status-${job.status || 'queued'}`;
+    const html = `
+      <div class="detail-layout">
+        <div class="detail-card">
+          <div class="detail-grid">
+            <div class="muted">job_id</div><div>${job.job_id || ''}</div>
+            <div class="muted">status</div><div><span class="badge ${statusClass}">${job.status || ''}</span></div>
+            <div class="muted">source_type</div><div>${job.source_type || ''}</div>
+            <div class="muted">source_value</div><div>${job.source_value || ''}</div>
+            <div class="muted">from_user</div><div>${job.from_user || ''} (${job.from_user_id || ''})</div>
+            <div class="muted">submitted_at</div><div>${formatDateTime(job.submitted_at) || ''}</div>
+            <div class="muted">updated_at</div><div>${formatDateTime(job.updated_at) || ''}</div>
+            <div class="muted">attempts</div><div>${job.attempts || 0}</div>
+          </div>
+        </div>
+        <div class="detail-card">
+          <h3>操作 / 失败原因</h3>
+          <div class="chips">
+            ${job.can_cancel ? `<button class="btn-danger" onclick="cancelJob('${job.job_id}')">取消</button>` : ''}
+            ${job.can_retry ? `<button class="btn-success" onclick="retryJob('${job.job_id}')">重试</button>` : ''}
+            <button class="btn-warning" onclick="bulkDeleteOne('${job.job_id}')">删除历史</button>
+          </div>
+          <div class="code-block small">${job.error || '无失败原因'}</div>
+        </div>
+      </div>
+      <div class="detail-card" style="margin-top:16px;">
+        <h3>文件列表</h3>
+        <ul class="file-list">${files}</ul>
+      </div>
+      <div class="detail-card" style="margin-top:16px;">
+        <h3>下载日志预览</h3>
+        <div class="code-block log-preview">${escapeHtml(logText || '暂无日志')}</div>
+      </div>
+    `;
+    document.getElementById('job_detail').innerHTML = html;
+    if (reopen) openJobDetailModal();
+  } finally {
+    jobDetailReloadInFlight = false;
+  }
+}
+
+async function openJobPreview(jobId) {
+  if (!jobId) return;
+  currentPreviewJobId = jobId;
+  const res = await fetch(`/api/jobs/${jobId}`, { credentials: 'same-origin' });
+  if (res.status === 401) { window.location.href = '/login'; return; }
+  const data = await res.json();
+  if (!res.ok) { alert(JSON.stringify(data)); return; }
+  const job = data.job;
+  currentJobDetailData = job;
+  currentJobPreviewIndex = findDefaultPreviewIndex(job.files || []);
+  const html = `
+    <div class="detail-card">
+      <h3>文件列表</h3>
+      <ul class="file-list">${renderPreviewFileList(job)}</ul>
+    </div>
+    <div class="detail-card" style="margin-top:16px;">
+      <h3>文件预览</h3>
+      <div class="preview-panel">
+        <div class="preview-box" id="job_file_preview">${renderJobPreview(job, currentJobPreviewIndex)}</div>
+      </div>
+    </div>
+  `;
+  document.getElementById('job_preview_detail').innerHTML = html;
+  initPreviewPlayer();
+  openJobPreviewModal();
+}
+
+async function refreshCurrentJobDetail() {
+  if (!currentJobDetailId) return;
+  await loadJobDetail(currentJobDetailId, { reopen: false });
+}
+
+function prevPage() {
+  if (jobPage > 1) reloadJobs(jobPage - 1);
+}
+
+function nextPage() {
+  if (jobPage < jobPages) reloadJobs(jobPage + 1);
+}
+
+function prevEventPage() {
+  if (eventPage > 1) reloadEvents(eventPage - 1);
+}
+
+function nextEventPage() {
+  if (eventPage < eventPages) reloadEvents(eventPage + 1);
+}
+
+function prevLoginLogPage() {
+  if (loginLogPage > 1) reloadLoginLogs(loginLogPage - 1);
+}
+
+function nextLoginLogPage() {
+  if (loginLogPage < loginLogPages) reloadLoginLogs(loginLogPage + 1);
+}
+
+function toggleJob(jobId, checked) {
+  if (checked) selectedJobIds.add(jobId);
+  else selectedJobIds.delete(jobId);
+}
+
+function toggleAllJobs(checked) {
+  document.querySelectorAll('input[data-job-id]').forEach((el) => {
+    el.checked = checked;
+    const jobId = el.getAttribute('data-job-id');
+    if (checked) selectedJobIds.add(jobId);
+    else selectedJobIds.delete(jobId);
+  });
+}
+
+async function bulkCancel() {
+  if (selectedJobIds.size === 0) { alert('请先勾选任务'); return; }
+  const res = await fetch('/api/jobs/bulk-cancel', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ job_ids: Array.from(selectedJobIds) }),
+  });
+  const data = await res.json();
+  if (!res.ok) { alert(JSON.stringify(data)); return; }
+  await reloadState();
+  await reloadJobs(jobPage);
+  showToast(`已批量取消 ${data.count || 0} 个任务`, 'warning');
+}
+
+async function bulkRetry() {
+  if (selectedJobIds.size === 0) { alert('请先勾选任务'); return; }
+  const res = await fetch('/api/jobs/bulk-retry', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ job_ids: Array.from(selectedJobIds) }),
+  });
+  const data = await res.json();
+  if (!res.ok) { alert(JSON.stringify(data)); return; }
+  await reloadState();
+  await reloadJobs(jobPage);
+  showToast(`已批量重试 ${data.count || 0} 个任务`);
+}
+
+async function bulkDelete() {
+  if (selectedJobIds.size === 0) { alert('请先勾选任务'); return; }
+  const res = await fetch('/api/jobs/bulk-delete', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ job_ids: Array.from(selectedJobIds) }),
+  });
+  const data = await res.json();
+  if (!res.ok) { alert(JSON.stringify(data)); return; }
+  selectedJobIds.clear();
+  if (currentJobDetailId && data.deleted?.includes(currentJobDetailId)) {
+    document.getElementById('job_detail').innerHTML = '<span class="muted">当前详情任务已删除</span>';
+    currentJobDetailId = '';
+    closeJobDetailModal();
+  }
+  await reloadState();
+  await reloadJobs(jobPage);
+  showToast(`已删除 ${data.count || 0} 条历史`, 'warning');
+}
+
+async function bulkDeleteOne(jobId) {
+  selectedJobIds.clear();
+  selectedJobIds.add(jobId);
+  await bulkDelete();
+}
+
+function quickEventType(name) {
+  document.getElementById('event_type').value = name;
+  reloadEvents(1);
+}
+
+renderState(boot);
+initTabs();
+initSidebarToggle();
+initModals();
+initTheme();
+document.getElementById('refreshAllBtn')?.addEventListener('click', async () => {
+  await reloadState();
+  await reloadToolsStatus();
+  await loadHookConfig();
+  await reloadJobs(jobPage, { background: true });
+  await reloadEvents(eventPage, { background: true });
+  await reloadLoginLogs(loginLogPage, { background: true });
+  if (currentJobDetailId && isJobDetailModalOpen()) await loadJobDetail(currentJobDetailId, { reopen: false });
+  showToast('数据已刷新');
+});
+reloadState();
+reloadToolsStatus();
+loadHookConfig();
+reloadJobs(1);
+reloadEvents(1);
+reloadLoginLogs(1);
+setInterval(reloadState, 5000);
+setInterval(reloadToolsStatus, 30000);
+setInterval(() => reloadJobs(jobPage, { background: true }), 5000);
+setInterval(() => reloadEvents(eventPage, { background: true }), 5000);
+setInterval(() => reloadLoginLogs(loginLogPage, { background: true }), 5000);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.polyfilled.min.js"></script>
+</body>
+</html>
+    

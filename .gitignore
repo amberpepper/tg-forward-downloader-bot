@@ -1,0 +1,18 @@
+__pycache__/
+*.pyc
+.env
+.venv/
+downloads/
+data/
+tdl-data/
+
+# frontend
+frontend/node_modules/
+frontend/.pnpm-store/
+frontend/.vite/
+
+# build artifacts
+app/static/frontend/
+
+# misc
+.DS_Store

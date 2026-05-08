@@ -1,0 +1,16 @@
+services:
+  tg-forward-downloader-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tg-forward-downloader-bot
+    restart: unless-stopped
+    init: true
+    env_file:
+      - .env
+    ports:
+      - "${WEB_PORT:-8090}:${WEB_PORT:-8090}"
+    volumes:
+      - ./downloads:/app/downloads
+      - ./data:/app/data
+      - ./tdl-data:/root/.tdl
