@@ -11,8 +11,5 @@ frontend/node_modules/
 frontend/.pnpm-store/
 frontend/.vite/
 
-# build artifacts
-app/static/frontend/
-
 # misc
 .DS_Store

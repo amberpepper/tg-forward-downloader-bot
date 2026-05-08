@@ -20,7 +20,7 @@ from urllib.parse import quote, urlparse
 import httpx
 import uvicorn
 from fastapi import FastAPI, File, Form, HTTPException, Query, Request, Response, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, Response as FastAPIResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, RedirectResponse, Response as FastAPIResponse
 from starlette.background import BackgroundTask
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Message, Update
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
@@ -991,19 +991,20 @@ def create_web_app(service: DownloaderBot) -> FastAPI:
     spa_dir = Path(__file__).resolve().parent / "static" / "frontend"
     spa_index = spa_dir / "index.html"
 
+    def serve_spa_index() -> FileResponse:
+        if not spa_index.exists():
+            raise HTTPException(status_code=500, detail="frontend build missing; run npm --prefix frontend run build")
+        return FileResponse(str(spa_index), media_type="text/html")
+
     @app.get("/")
     async def index() -> Response:
-        if spa_index.exists():
-            return FileResponse(str(spa_index), media_type="text/html")
-        return RedirectResponse(url="/login", status_code=302)
+        return serve_spa_index()
 
     @app.get("/login")
     async def login_page(request: Request) -> Response:
         if is_authenticated(request):
             return RedirectResponse(url="/admin", status_code=302)
-        if spa_index.exists():
-            return FileResponse(str(spa_index), media_type="text/html")
-        return HTMLResponse(render_login_page(""))
+        return serve_spa_index()
 
     @app.post("/login")
     async def login_submit(
@@ -1019,7 +1020,7 @@ def create_web_app(service: DownloaderBot) -> FastAPI:
                 success=False,
                 failure_reason="invalid_credentials",
             )
-            return HTMLResponse(render_login_page("用户名或密码错误"), status_code=401)
+            return JSONResponse({"detail": "用户名或密码错误"}, status_code=401)
         await safe_record_login_attempt(
             request,
             username=username,
@@ -1378,14 +1379,11 @@ def create_web_app(service: DownloaderBot) -> FastAPI:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return JSONResponse({"ok": True, **snapshot})
 
-    @app.get("/admin", response_class=HTMLResponse)
+    @app.get("/admin")
     async def admin_page(request: Request) -> Response:
         if not is_authenticated(request):
             return RedirectResponse(url="/login", status_code=302)
-        if spa_index.exists():
-            return FileResponse(str(spa_index), media_type="text/html")
-        snapshot = await service.store.snapshot(service.queue.qsize(), len(service.worker_tasks))
-        return HTMLResponse(render_admin_page(snapshot))
+        return serve_spa_index()
 
     if spa_dir.exists():
         from fastapi.staticfiles import StaticFiles
@@ -1433,18 +1431,6 @@ async def main() -> None:
         await service.stop_workers()
         await store.close()
 
-
-
-def render_login_page(error: str) -> str:
-    error_html = f'<div class="error">{error}</div>' if error else ""
-    template = (Path(__file__).resolve().parent / "templates" / "login.html").read_text(encoding="utf-8")
-    return template.replace("__ERROR_HTML__", error_html)
-
-
-def render_admin_page(snapshot: dict[str, Any]) -> str:
-    data_js = json.dumps(snapshot, ensure_ascii=False)
-    template = (Path(__file__).resolve().parent / "templates" / "index.html").read_text(encoding="utf-8")
-    return template.replace("__BOOT_JSON__", data_js)
 
 
 def resolve_client_ip(request: Request) -> str | None:
