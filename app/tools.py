@@ -83,8 +83,7 @@ def build_tool_action_env(settings: Settings, tool_name: str, update: bool) -> d
     env["INSTALL_TDL"] = "1" if tool_name == "tdl" else "0"
     env["INSTALL_YTDLP"] = "1" if tool_name == "yt-dlp" else "0"
     env["INSTALL_FFMPEG"] = "1" if tool_name == "ffmpeg" else "0"
-    if first_env("INSTALL_BIN_DIR"):
-        env["INSTALL_BIN_DIR"] = first_env("INSTALL_BIN_DIR") or ""
+    env["INSTALL_BIN_DIR"] = first_env("INSTALL_BIN_DIR") or str(PROJECT_ROOT / "bin")
     return env
 
 
@@ -110,5 +109,4 @@ async def run_tool_action_script(settings: Settings, tool_name: str, action: str
         "output": output,
         "script": script_name,
     }
-
 
