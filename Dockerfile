@@ -41,7 +41,6 @@ RUN chmod +x ./scripts/install.sh ./scripts/update.sh \
 
 COPY app ./app
 COPY --from=frontend-build /app/app/static/frontend ./app/static/frontend
-COPY examples ./examples
 COPY README.md ./
 COPY docs ./docs
 

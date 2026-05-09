@@ -67,3 +67,27 @@ docker compose exec tg-forward-downloader-bot tdl login -T code
 ```
 
 登录成功后，`tdl` 会话会持久化在 `./tdl-data`。
+
+---
+
+## 4) GitHub 自动发布 Docker 镜像（GHCR）
+
+仓库已包含工作流：`.github/workflows/docker-publish.yml`  
+触发条件：
+
+- push 到 `main` / `master`
+- push tag（如 `v1.0.0`）
+- 手动触发（Actions -> Docker Publish）
+
+镜像地址格式：
+
+```text
+ghcr.io/<github-owner>/<repo-name>
+```
+
+常用 tag：
+
+- `latest`（默认分支）
+- `main` 或 `master`
+- `v1.0.0`（按 Git tag）
+- `sha-<commit>`
