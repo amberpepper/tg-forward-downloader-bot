@@ -19,7 +19,8 @@ ENV PYTHONUNBUFFERED=1 \
     INSTALL_PYTHON_DEPS=0 \
     INSTALL_TDL=1 \
     INSTALL_YTDLP=1 \
-    INSTALL_FFMPEG=1
+    INSTALL_FFMPEG=1 \
+    FFMPEG_INSTALL_METHOD=static
 
 WORKDIR /app
 
@@ -28,7 +29,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     wget \
     tar \
-    ffmpeg \
+    xz-utils \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt ./
@@ -41,8 +42,6 @@ RUN chmod +x ./scripts/install.sh ./scripts/update.sh \
 
 COPY app ./app
 COPY --from=frontend-build /app/app/static/frontend ./app/static/frontend
-COPY README.md ./
-COPY docs ./docs
 
 RUN mkdir -p /app/downloads /app/data /root/.tdl
 

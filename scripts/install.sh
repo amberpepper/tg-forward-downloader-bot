@@ -8,6 +8,7 @@ ENV_EXAMPLE_FILE="${ENV_EXAMPLE_FILE:-$ROOT_DIR/.env.example}"
 INSTALL_TDL="${INSTALL_TDL:-1}"
 INSTALL_YTDLP="${INSTALL_YTDLP:-1}"
 INSTALL_FFMPEG="${INSTALL_FFMPEG:-1}"
+FFMPEG_INSTALL_METHOD="${FFMPEG_INSTALL_METHOD:-apt}"
 INSTALL_PYTHON_DEPS="${INSTALL_PYTHON_DEPS:-1}"
 UPDATE_MODE="${UPDATE_MODE:-0}"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
@@ -69,6 +70,9 @@ ensure_base_deps() {
 
   if has_cmd apt-get; then
     local pkgs=(ca-certificates curl wget tar)
+    if [[ "$INSTALL_FFMPEG" == "1" && "$FFMPEG_INSTALL_METHOD" == "static" ]]; then
+      pkgs+=(xz-utils)
+    fi
     if ! "$PYTHON_BIN" -m venv --help >/dev/null 2>&1; then
       pkgs+=(python3-venv)
     fi
@@ -238,6 +242,41 @@ install_ffmpeg() {
 
   if [[ "$UPDATE_MODE" != "1" ]] && has_cmd ffmpeg; then
     ok "ffmpeg 已存在: $(command -v ffmpeg)"
+    return
+  fi
+
+  if [[ "$FFMPEG_INSTALL_METHOD" == "static" ]]; then
+    ensure_bin_dir
+    local target asset url tmpdir bindir
+    case "$(uname -m)" in
+      x86_64) target="linux64" ;;
+      arm64|aarch64*) target="linuxarm64" ;;
+      *)
+        err "static ffmpeg 暂不支持当前架构: $(uname -m)"
+        exit 1
+        ;;
+    esac
+
+    asset="ffmpeg-master-latest-${target}-gpl.tar.xz"
+    url="https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/${asset}"
+    tmpdir="$(mktemp -d)"
+
+    log "安装 static ffmpeg: ${asset}"
+    download_to_file "$url" "$tmpdir/$asset"
+    tar -xJf "$tmpdir/$asset" -C "$tmpdir"
+    bindir="$(find "$tmpdir" -maxdepth 3 -type d -name bin | head -n 1 || true)"
+    if [[ -z "$bindir" || ! -x "$bindir/ffmpeg" ]]; then
+      err "static ffmpeg 解压后未找到可执行文件"
+      rm -rf "$tmpdir"
+      exit 1
+    fi
+
+    install -m 0755 "$bindir/ffmpeg" "$BIN_DIR/ffmpeg"
+    if [[ -x "$bindir/ffprobe" ]]; then
+      install -m 0755 "$bindir/ffprobe" "$BIN_DIR/ffprobe"
+    fi
+    rm -rf "$tmpdir"
+    ok "ffmpeg 已安装到 $BIN_DIR/ffmpeg (static)"
     return
   fi
 
