@@ -8,9 +8,12 @@ services:
     init: true
     env_file:
       - .env
+    environment:
+      - INSTALL_BIN_DIR=/app/bin
     ports:
       - "${WEB_PORT:-8090}:${WEB_PORT:-8090}"
     volumes:
+      - ./bin:/app/bin
       - ./downloads:/app/downloads
       - ./data:/app/data
       - ./tdl-data:/root/.tdl

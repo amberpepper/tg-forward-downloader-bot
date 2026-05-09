@@ -8,17 +8,15 @@ ENV_EXAMPLE_FILE="${ENV_EXAMPLE_FILE:-$ROOT_DIR/.env.example}"
 INSTALL_TDL="${INSTALL_TDL:-1}"
 INSTALL_YTDLP="${INSTALL_YTDLP:-1}"
 INSTALL_FFMPEG="${INSTALL_FFMPEG:-1}"
-FFMPEG_INSTALL_METHOD="${FFMPEG_INSTALL_METHOD:-apt}"
+FFMPEG_INSTALL_METHOD="${FFMPEG_INSTALL_METHOD:-static}"
 INSTALL_PYTHON_DEPS="${INSTALL_PYTHON_DEPS:-1}"
 UPDATE_MODE="${UPDATE_MODE:-0}"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 
 if [[ -n "${INSTALL_BIN_DIR:-}" ]]; then
   BIN_DIR="$INSTALL_BIN_DIR"
-elif [[ $EUID -eq 0 || -w /usr/local/bin ]]; then
-  BIN_DIR="/usr/local/bin"
 else
-  BIN_DIR="$HOME/.local/bin"
+  BIN_DIR="$ROOT_DIR/bin"
 fi
 
 COLOR_RESET='\033[0m'
@@ -78,7 +76,11 @@ ensure_base_deps() {
     fi
     apt_install_if_missing "${pkgs[@]}"
   else
-    for cmd in curl wget tar; do
+    local cmds=(curl wget tar)
+    if [[ "$INSTALL_FFMPEG" == "1" && "$FFMPEG_INSTALL_METHOD" == "static" && "$(uname -s)" == "Linux" ]]; then
+      cmds+=(xz)
+    fi
+    for cmd in "${cmds[@]}"; do
       if ! has_cmd "$cmd"; then
         err "缺少命令: $cmd，且当前系统不是 apt 环境，请手动安装"
         exit 1
@@ -240,19 +242,35 @@ install_ffmpeg() {
     return
   fi
 
-  if [[ "$UPDATE_MODE" != "1" ]] && has_cmd ffmpeg; then
-    ok "ffmpeg 已存在: $(command -v ffmpeg)"
+  if [[ "$UPDATE_MODE" != "1" ]] && [[ -x "$BIN_DIR/ffmpeg" ]]; then
+    ok "ffmpeg 已存在: $BIN_DIR/ffmpeg"
     return
   fi
 
   if [[ "$FFMPEG_INSTALL_METHOD" == "static" ]]; then
     ensure_bin_dir
-    local target asset url tmpdir bindir
-    case "$(uname -m)" in
+    local target asset url tmpdir bindir os_name arch_name
+    os_name="$(uname -s)"
+    arch_name="$(uname -m)"
+
+    if [[ "$os_name" != "Linux" ]]; then
+      if has_cmd ffmpeg; then
+        ok "当前系统($os_name)跳过 static ffmpeg，使用已有 ffmpeg: $(command -v ffmpeg)"
+        return
+      fi
+      err "static ffmpeg 仅支持 Linux，当前系统: $os_name。请手动安装 ffmpeg 或设置 FFMPEG_INSTALL_METHOD=apt。"
+      exit 1
+    fi
+
+    case "$arch_name" in
       x86_64) target="linux64" ;;
       arm64|aarch64*) target="linuxarm64" ;;
       *)
-        err "static ffmpeg 暂不支持当前架构: $(uname -m)"
+        if has_cmd ffmpeg; then
+          ok "当前架构($arch_name)跳过 static ffmpeg，使用已有 ffmpeg: $(command -v ffmpeg)"
+          return
+        fi
+        err "static ffmpeg 暂不支持当前架构: $arch_name。请手动安装 ffmpeg 或设置 FFMPEG_INSTALL_METHOD=apt。"
         exit 1
         ;;
     esac
@@ -280,13 +298,14 @@ install_ffmpeg() {
     return
   fi
 
-  if has_cmd apt-get; then
+  if [[ "$FFMPEG_INSTALL_METHOD" == "apt" ]] && has_cmd apt-get; then
     log "$([[ "$UPDATE_MODE" == "1" ]] && echo '更新' || echo '安装') ffmpeg"
     sudo_if_needed apt-get update
     sudo_if_needed apt-get install -y ffmpeg
     ok "ffmpeg 已就绪"
   else
-    warn "当前系统不是 apt 环境，跳过 ffmpeg，请手动安装"
+    err "FFMPEG_INSTALL_METHOD=$FFMPEG_INSTALL_METHOD 不受支持（可选: static / apt）"
+    exit 1
   fi
 }
 
@@ -305,7 +324,9 @@ main() {
   if [[ -x "$BIN_DIR/yt-dlp" ]]; then
     upsert_env_value "YT_DLP_BIN" "$BIN_DIR/yt-dlp" "$ENV_FILE"
   fi
-  if has_cmd ffmpeg; then
+  if [[ -x "$BIN_DIR/ffmpeg" ]]; then
+    upsert_env_value "FFMPEG_BIN" "$BIN_DIR/ffmpeg" "$ENV_FILE"
+  elif has_cmd ffmpeg; then
     upsert_env_value "FFMPEG_BIN" "$(command -v ffmpeg)" "$ENV_FILE"
   fi
 

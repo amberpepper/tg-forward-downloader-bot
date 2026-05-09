@@ -16,16 +16,11 @@ FROM python:3.13-slim
 ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     DEBIAN_FRONTEND=noninteractive \
-    INSTALL_PYTHON_DEPS=0 \
-    INSTALL_TDL=1 \
-    INSTALL_YTDLP=1 \
-    INSTALL_FFMPEG=1 \
-    FFMPEG_INSTALL_METHOD=static
+    PATH="/app/bin:${PATH}"
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
     curl \
     wget \
     tar \
@@ -37,14 +32,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY scripts ./scripts
 COPY .env.example ./
-RUN chmod +x ./scripts/install.sh ./scripts/update.sh \
-    && bash ./scripts/install.sh
+RUN chmod +x ./scripts/install.sh ./scripts/update.sh
 
 COPY app ./app
 COPY --from=frontend-build /app/app/static/frontend ./app/static/frontend
 
-RUN mkdir -p /app/downloads /app/data /root/.tdl
+RUN mkdir -p /app/downloads /app/data /app/bin /root/.tdl
 
-VOLUME ["/app/downloads", "/app/data", "/root/.tdl"]
+VOLUME ["/app/bin", "/app/downloads", "/app/data", "/root/.tdl"]
 
 CMD ["python", "app/main.py"]
